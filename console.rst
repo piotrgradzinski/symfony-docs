@@ -48,15 +48,30 @@ want a command to create a user::
             // ... put here the code to create the user
 
             // this method must return an integer number with the "exit status code"
-            // of the command.
+            // of the command. You can also use these constants to make code more readable
 
             // return this if there was no problem running the command
-            return 0;
+            // (it's equivalent to returning int(0))
+            return Command::SUCCESS;
 
             // or return this if some error happened during the execution
-            // return 1;
+            // (it's equivalent to returning int(1))
+            // return Command::FAILURE;
+
+            // or return this to indicate incorrect command usage; e.g. invalid options
+            // or missing arguments (it's equivalent to returning int(2))
+            // return Command::INVALID
         }
     }
+
+.. versionadded:: 5.1
+
+    The ``Command::SUCCESS`` and ``Command::FAILURE`` constants were introduced
+    in Symfony 5.1.
+
+.. versionadded:: 5.3
+
+    The ``Command::INVALID`` constant was introduced in Symfony 5.3
 
 Configuring the Command
 -----------------------
@@ -156,7 +171,7 @@ the console::
         $output->write('You are about to ');
         $output->write('create a user.');
 
-        return 0;
+        return Command::SUCCESS;
     }
 
 Now, try executing the command:
@@ -215,7 +230,7 @@ method, which returns an instance of
             $section1->clear(2);
             // Output is now completely empty!
 
-            return 0;
+            return Command::SUCCESS;
         }
     }
 
@@ -257,7 +272,7 @@ Use input options or arguments to pass information to the command::
         // retrieve the argument value using getArgument()
         $output->writeln('Username: '.$input->getArgument('username'));
 
-        return 0;
+        return Command::SUCCESS;
     }
 
 Now, you can pass the username to the command:
@@ -308,7 +323,7 @@ as a service, you can use normal dependency injection. Imagine you have a
 
             $output->writeln('User successfully generated!');
 
-            return 0;
+            return Command::SUCCESS;
         }
     }
 
@@ -332,13 +347,8 @@ command:
 
 :method:`Symfony\\Component\\Console\\Command\\Command::execute` *(required)*
     This method is executed after ``interact()`` and ``initialize()``.
-    It contains the logic you want the command to execute and it should
+    It contains the logic you want the command to execute and it must
     return an integer which will be used as the command `exit status`_.
-
-    .. deprecated:: 4.4
-
-        Not returning an integer with the exit status as the result of
-        ``execute()`` is deprecated since Symfony 4.4.
 
 .. _console-testing-commands:
 
@@ -376,11 +386,19 @@ console::
 
             // the output of the command in the console
             $output = $commandTester->getDisplay();
-            $this->assertContains('Username: Wouter', $output);
+            $this->assertStringContainsString('Username: Wouter', $output);
 
             // ...
         }
     }
+
+If you are using a :doc:`single-command application </components/console/single_command_tool>`,
+call ``setAutoExit(false)`` on it to get the command result in ``CommandTester``.
+
+.. versionadded:: 5.2
+
+    The ``setAutoExit()`` method for single-command applications was introduced
+    in Symfony 5.2.
 
 .. tip::
 

@@ -51,9 +51,13 @@ for more information):
     .. code-block:: php
 
         // config/packages/framework.php
-        $container->loadFromExtension('framework', [
-            'csrf_protection' => null,
-        ]);
+        use Symfony\Config\FrameworkConfig;
+
+        return static function (FrameworkConfig $framework) {
+            $framework->csrfProtection()
+                ->enabled(true)
+            ;
+        };
 
 The tokens used for CSRF protection are meant to be different for every user and
 they are stored in the session. That's why a session is started automatically as
@@ -116,10 +120,6 @@ You can also customize the rendering of the CSRF form field creating a custom
 the field (e.g. define ``{% block csrf_token_widget %} ... {% endblock %}`` to
 customize the entire form field contents).
 
-.. versionadded:: 4.3
-
-    The ``csrf_token`` form field prefix was introduced in Symfony 4.3.
-
 CSRF Protection in Login Forms
 ------------------------------
 
@@ -167,4 +167,19 @@ to check its validity::
         }
     }
 
+CSRF Tokens and Compression Side-Channel Attacks
+------------------------------------------------
+
+`BREACH`_ and `CRIME`_ are security exploits against HTTPS when using HTTP
+compression. Attackers can leverage information leaked by compression to recover
+targeted parts of the plaintext. To mitigate these attacks, and prevent an
+attacker from guessing the CSRF tokens, a random mask is prepended to the token
+and used to scramble it.
+
+.. versionadded:: 5.3
+
+    The randomization of tokens was introduced in Symfony 5.3
+
 .. _`Cross-site request forgery`: https://en.wikipedia.org/wiki/Cross-site_request_forgery
+.. _`BREACH`: https://en.wikipedia.org/wiki/BREACH
+.. _`CRIME`: https://en.wikipedia.org/wiki/CRIME

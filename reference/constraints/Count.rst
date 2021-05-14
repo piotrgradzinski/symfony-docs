@@ -6,7 +6,9 @@ Countable) element count is *between* some minimum and maximum value.
 
 ==========  ===================================================================
 Applies to  :ref:`property or method <validation-property-target>`
-Options     - `exactMessage`_
+Options     - `divisibleBy`_
+            - `divisibleByMessage`_
+            - `exactMessage`_
             - `groups`_
             - `max`_
             - `maxMessage`_
@@ -42,6 +44,24 @@ you might add the following:
              *      maxMessage = "You cannot specify more than {{ limit }} emails"
              * )
              */
+            protected $emails = [];
+        }
+
+    .. code-block:: php-attributes
+
+        // src/Entity/Participant.php
+        namespace App\Entity;
+
+        use Symfony\Component\Validator\Constraints as Assert;
+
+        class Participant
+        {
+            #[Assert\Count(
+                min: 1,
+                max: 5,
+                minMessage: 'You must specify at least one email',
+                maxMessage: 'You cannot specify more than {{ limit }} emails',
+            )]
             protected $emails = [];
         }
 
@@ -100,6 +120,44 @@ you might add the following:
 
 Options
 -------
+
+``divisibleBy``
+~~~~~~~~~~~~~~~
+
+**type**: ``integer`` **default**: null
+
+.. versionadded:: 5.1
+
+    The ``divisibleBy`` option was introduced in Symfony 5.1.
+
+Validates that the number of elements of the given collection is divisible by
+a certain number.
+
+.. seealso::
+
+    If you need to validate that other types of data different from collections
+    are divisible by a certain number, use the
+    :doc:`DivisibleBy </reference/constraints/DivisibleBy>` constraint.
+
+``divisibleByMessage``
+~~~~~~~~~~~~~~~~~~~~~~
+
+**type**: ``string`` **default**: ``The number of elements in this collection should be a multiple of {{ compared_value }}.``
+
+.. versionadded:: 5.1
+
+    The ``divisibleByMessage`` option was introduced in Symfony 5.1.
+
+The message that will be shown if the number of elements of the given collection
+is not divisible by the number defined in the ``divisibleBy`` option.
+
+You can use the following parameters in this message:
+
+========================  ===================================================
+Parameter                 Description
+========================  ===================================================
+``{{ compared_value }}``  The number configured in the ``divisibleBy`` option
+========================  ===================================================
 
 ``exactMessage``
 ~~~~~~~~~~~~~~~~

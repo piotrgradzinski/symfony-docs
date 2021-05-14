@@ -12,27 +12,47 @@ alphanumeric characters.
 Creating the Constraint Class
 -----------------------------
 
-First you need to create a Constraint class and extend :class:`Symfony\\Component\\Validator\\Constraint`::
+First you need to create a Constraint class and extend :class:`Symfony\\Component\\Validator\\Constraint`:
 
-    // src/Validator/ContainsAlphanumeric.php
-    namespace App\Validator;
+.. configuration-block::
 
-    use Symfony\Component\Validator\Constraint;
+    .. code-block:: php-annotations
 
-    /**
-     * @Annotation
-     */
-    class ContainsAlphanumeric extends Constraint
-    {
-        public $message = 'The string "{{ string }}" contains an illegal character: it can only contain letters or numbers.';
-    }
+        // src/Validator/ContainsAlphanumeric.php
+        namespace App\Validator;
 
-.. note::
+        use Symfony\Component\Validator\Constraint;
 
-    The ``@Annotation`` annotation is necessary for this new constraint in
-    order to make it available for use in classes via annotations.
-    Options for your constraint are represented as public properties on the
-    constraint class.
+        /**
+         * @Annotation
+         */
+        class ContainsAlphanumeric extends Constraint
+        {
+            public $message = 'The string "{{ string }}" contains an illegal character: it can only contain letters or numbers.';
+        }
+
+    .. code-block:: php-attributes
+
+        // src/Validator/ContainsAlphanumeric.php
+        namespace App\Validator;
+
+        use Symfony\Component\Validator\Constraint;
+
+        #[\Attribute]
+        class ContainsAlphanumeric extends Constraint
+        {
+            public $message = 'The string "{{ string }}" contains an illegal character: it can only contain letters or numbers.';
+        }
+
+Add ``@Annotation`` or ``#[\Attribute]`` to the constraint class if you want to
+use it as an annotation/attribute in other classes. If the constraint has
+configuration options, define them as public properties on the constraint class.
+
+.. versionadded:: 5.2
+
+    The ability to use PHP attributes to configure constraints was introduced in
+    Symfony 5.2. Prior to this, Doctrine Annotations were the only way to
+    annotate constraints.
 
 Creating the Validator itself
 -----------------------------
@@ -93,11 +113,6 @@ The validator class only has one required method ``validate()``::
         }
     }
 
-.. versionadded:: 4.4
-
-    The feature to allow passing an object as the ``buildViolation()`` argument
-    was introduced in Symfony 4.4.
-
 Inside ``validate``, you don't need to return a value. Instead, you add violations
 to the validator's ``context`` property and a value will be considered valid
 if it causes no violations. The ``buildViolation()`` method takes the error
@@ -128,6 +143,25 @@ You can use custom validators like the ones provided by Symfony itself:
              * @Assert\NotBlank
              * @AcmeAssert\ContainsAlphanumeric
              */
+            protected $name;
+
+            // ...
+        }
+
+    .. code-block:: php-attributes
+
+        // src/Entity/AcmeEntity.php
+        namespace App\Entity;
+
+        use App\Validator as AcmeAssert;
+        use Symfony\Component\Validator\Constraints as Assert;
+
+        class AcmeEntity
+        {
+            // ...
+
+            #[Assert\NotBlank]
+            #[AcmeAssert\ContainsAlphanumeric]
             protected $name;
 
             // ...
@@ -190,6 +224,16 @@ then your validator is already registered as a service and :doc:`tagged </servic
 with the necessary ``validator.constraint_validator``. This means you can
 :ref:`inject services or configuration <services-constructor-injection>` like any other service.
 
+Create a Reusable Set of Constraints
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In case you need to apply some common set of constraints in different places
+consistently across your application, you can extend the :doc:`Compound constraint </reference/constraints/Compound>`.
+
+.. versionadded:: 5.1
+
+    The ``Compound`` constraint was introduced in Symfony 5.1.
+
 Class Constraint Validator
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -236,6 +280,19 @@ not to the property:
         /**
          * @AcmeAssert\ProtocolClass
          */
+        class AcmeEntity
+        {
+            // ...
+        }
+
+    .. code-block:: php-attributes
+
+        // src/Entity/AcmeEntity.php
+        namespace App\Entity;
+
+        use App\Validator as AcmeAssert;
+
+        #[AcmeAssert\ProtocolClass]
         class AcmeEntity
         {
             // ...

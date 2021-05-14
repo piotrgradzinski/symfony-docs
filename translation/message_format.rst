@@ -4,10 +4,6 @@
 How to Translate Messages using the ICU MessageFormat
 =====================================================
 
-.. versionadded:: 4.2
-
-   Support for ICU MessageFormat was introduced in Symfony 4.2.
-
 Messages (i.e. strings) in applications are almost never completely static.
 They contain variables or other complex logic like pluralization. In order to
 handle this, the Translator component supports the `ICU MessageFormat`_ syntax.
@@ -176,6 +172,25 @@ you to use literal text in the select statements:
     outermost structure of the message. The strings are in this way better
     readable for translators and, as you can see in the ``other`` case, other
     parts of the sentence might be influenced by the variables.
+
+.. tip::
+
+    It's possible to translate ICU MessageFormat messages directly in code,
+    without having to define them in any file::
+
+        $invitation = '{organizer_gender, select,
+            female {{organizer_name} has invited you for her party!}
+            male   {{organizer_name} has invited you for his party!}
+            other  {{organizer_name} have invited you for their party!}
+        }';
+
+        // prints "Ryan has invited you for his party!"
+        echo $translator->trans($invitation, [
+            'organizer_name' => 'Ryan',
+            'organizer_gender' => 'male',
+        ]);
+
+.. _component-translation-pluralization:
 
 Pluralization
 -------------

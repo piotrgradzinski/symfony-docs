@@ -1,10 +1,6 @@
 Timezone
 ========
 
-.. versionadded:: 4.3
-
-    The ``Timezone`` constraint was introduced in Symfony 4.3.
-
 Validates that a value is a valid timezone identifier (e.g. ``Europe/Paris``).
 
 ==========  ======================================================================
@@ -39,6 +35,19 @@ string which contains any of the `PHP timezone identifiers`_ (e.g. ``America/New
             /**
              * @Assert\Timezone
              */
+            protected $timezone;
+        }
+
+    .. code-block:: php-attributes
+
+        // src/Entity/UserSettings.php
+        namespace App\Entity;
+
+        use Symfony\Component\Validator\Constraints as Assert;
+
+        class UserSettings
+        {
+            #[Assert\Timezone]
             protected $timezone;
         }
 
@@ -127,7 +136,12 @@ You can use the following parameters in this message:
 Parameter        Description
 ===============  ==============================================================
 ``{{ value }}``  The current (invalid) value
+``{{ label }}``  Corresponding form field label
 ===============  ==============================================================
+
+.. versionadded:: 5.2
+
+    The ``{{ label }}`` parameter was introduced in Symfony 5.2.
 
 .. include:: /reference/constraints/_payload-option.rst.inc
 

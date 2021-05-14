@@ -1,10 +1,6 @@
 Negative
 ========
 
-.. versionadded:: 4.3
-
-    The ``Negative`` constraint was introduced in Symfony 4.3.
-
 Validates that a value is a negative number. Zero is neither positive nor
 negative, so you must use :doc:`/reference/constraints/NegativeOrZero` if you
 want to allow zero as value.
@@ -38,6 +34,19 @@ The following constraint ensures that the ``withdraw`` of a  bank account
             /**
              * @Assert\Negative
              */
+            protected $withdraw;
+        }
+
+    .. code-block:: php-attributes
+
+        // src/Entity/TransferItem.php
+        namespace App\Entity;
+
+        use Symfony\Component\Validator\Constraints as Assert;
+
+        class TransferItem
+        {
+            #[Assert\Negative]
             protected $withdraw;
         }
 

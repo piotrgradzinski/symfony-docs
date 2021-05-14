@@ -187,9 +187,11 @@ code to production:
     .. code-block:: php
 
         // config/packages/test/twig.php
-        $container->loadFromExtension('twig', [
-            'strict_variables' => true,
-        ]);
+        use Symfony\Config\TwigConfig;
+
+        return static function (TwigConfig $twig) {
+            $twig->strictVariables(true);
+        };
 
 You can also use a different environment entirely, or override the default
 debug mode (``true``) by passing each as options to the ``bootKernel()``
@@ -570,6 +572,64 @@ will no longer be followed::
 
     $client->followRedirects(false);
 
+.. _testing_logging_in_users:
+
+Logging in Users (Authentication)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 5.1
+
+    The ``loginUser()`` method was introduced in Symfony 5.1.
+
+When you want to add application tests for protected pages, you have to
+first "login" as a user. Reproducing the actual steps - such as
+submitting a login form - make a test very slow. For this reason, Symfony
+provides a ``loginUser()`` method to simulate logging in in your functional
+tests.
+
+Instead of logging in with real users, it's recommended to create a user only for
+tests. You can do that with Doctrine :ref:`data fixtures <user-data-fixture>`,
+to load the testing users only in the test database.
+
+After loading users in your database, use your user repository to fetch
+this user and use
+:method:`$client->loginUser() <Symfony\\Bundle\\FrameworkBundle\\KernelBrowser::loginUser>`
+to simulate a login request::
+
+    // tests/Controller/ProfileControllerTest.php
+    namespace App\Tests\Controller;
+
+    use App\Repository\UserRepository;
+    use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+
+    class ProfileControllerTest extends WebTestCase
+    {
+        // ...
+
+        public function testVisitingWhileLoggedIn()
+        {
+            $client = static::createClient();
+            $userRepository = static::$container->get(UserRepository::class);
+
+            // retrieve the test user
+            $testUser = $userRepository->findOneByEmail('john.doe@example.com');
+
+            // simulate $testUser being logged in
+            $client->loginUser($testUser);
+
+            // test e.g. the profile page
+            $client->request('GET', '/profile');
+            $this->assertResponseIsSuccessful();
+            $this->assertSelectorTextContains('h1', 'Hello John!');
+        }
+    }
+
+You can pass any
+:class:`Symfony\\Component\\Security\\Core\\User\\UserInterface` instance to
+``loginUser()``. This method creates a special
+:class:`Symfony\\Bundle\\FrameworkBundle\\Test\\TestBrowserToken` object and
+stores in the session of the test client.
+
 Making AJAX Requests
 ....................
 
@@ -775,10 +835,6 @@ input::
     :method:`Symfony\\Component\\DomCrawler\\Form::getName` method to get the
     form name.
 
-    .. versionadded:: 4.4
-
-        The ``getName()`` method was introduced in Symfony 4.4.
-
 .. tip::
 
     If you purposefully want to select "invalid" select/radio values, see
@@ -819,17 +875,6 @@ However, Symfony provides useful shortcut methods for the most common cases:
     :local:
     :depth: 1
 
-.. versionadded:: 4.3
-
-    The shortcut methods for assertions using ``WebTestCase`` were introduced
-    in Symfony 4.3.
-
-.. versionadded:: 4.4
-
-    Starting from Symfony 4.4, when using `symfony/panther`_ for end-to-end
-    testing, you can use all the following assertions except the ones related to
-    the :doc:`Crawler </components/dom_crawler>`.
-
 Response Assertions
 ...................
 
@@ -850,6 +895,14 @@ Response Assertions
     checking for a specific cookie path or domain).
 ``assertResponseCookieValueSame(string $name, string $expectedValue, string $path = '/', string $domain = null, string $message = '')``
     Asserts the given cookie is present and set to the expected value.
+``assertResponseFormatSame(?string $expectedFormat, string $message = '')``
+    Asserts the response format returned by the
+    :method:`Symfony\\Component\\HttpFoundation\\Response::getFormat` method
+    is the same as the expected value.
+
+.. versionadded:: 5.3
+
+    The ``assertResponseFormatSame()`` method was introduced in Symfony 5.3.
 
 Request Assertions
 ..................
@@ -889,13 +942,25 @@ Crawler Assertions
 ``assertInputValueSame(string $fieldName, string $expectedValue, string $message = '')``/``assertInputValueNotSame(string $fieldName, string $expectedValue, string $message = '')``
     Asserts that value of the form input with the given name does (not)
     equal the expected value.
+``assertCheckboxChecked(string $fieldName, string $message = '')``/``assertCheckboxNotChecked(string $fieldName, string $message = '')``
+    Asserts that the checkbox with the given name is (not) checked.
+``assertFormValue(string $formSelector, string $fieldName, string $value, string $message = '')``/``assertNoFormValue(string $formSelector, string $fieldName, string $message = '')``
+    Asserts that value of the field of the first form matching the given
+    selector does (not) equal the expected value.
+
+.. versionadded:: 5.2
+
+    The ``assertCheckboxChecked()``, ``assertCheckboxNotChecked()``,
+    ``assertFormValue()`` and ``assertNoFormValue()`` methods were introduced
+    in Symfony 5.2.
 
 Mailer Assertions
 .................
 
-.. versionadded:: 4.4
+.. versionadded:: 5.1
 
-    The mailer assert methods were introduced in Symfony 4.4.
+    Starting from Symfony 5.1, the following assertions no longer require to make
+    a request with the ``Client`` in a test case extending the ``WebTestCase`` class.
 
 ``assertEmailCount(int $count, string $transport = null, string $message = '')``
     Asserts that the expected number of emails was sent.
@@ -953,6 +1018,5 @@ Learn more
 .. _`DAMADoctrineTestBundle`: https://github.com/dmaicher/doctrine-test-bundle
 .. _`DoctrineFixturesBundle documentation`: https://symfony.com/doc/current/bundles/DoctrineFixturesBundle/index.html
 .. _`SymfonyMakerBundle`: https://symfony.com/doc/current/bundles/SymfonyMakerBundle/index.html
-.. _`symfony/panther`: https://github.com/symfony/panther
 .. _`PHPUnit Assertion`: https://phpunit.readthedocs.io/en/stable/assertions.html
 .. _`section 4.1.18 of RFC 3875`: https://tools.ietf.org/html/rfc3875#section-4.1.18

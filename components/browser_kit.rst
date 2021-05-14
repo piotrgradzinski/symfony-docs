@@ -40,13 +40,7 @@ The component only provides an abstract client and does not provide any backend
 ready to use for the HTTP layer. To create your own client, you must extend the
 ``AbstractBrowser`` class and implement the
 :method:`Symfony\\Component\\BrowserKit\\AbstractBrowser::doRequest` method.
-
-.. deprecated:: 4.3
-
-    In Symfony 4.3 and earlier versions, the ``AbstractBrowser`` class was called
-    ``Client`` (which is now deprecated).
-
-The ``doRequest()`` method accepts a request and should return a response::
+This method accepts a request and should return a response::
 
     namespace Acme;
 
@@ -85,6 +79,20 @@ The value returned by the ``request()`` method is an instance of the
 :class:`Symfony\\Component\\DomCrawler\\Crawler` class, provided by the
 :doc:`DomCrawler component </components/dom_crawler>`, which allows accessing
 and traversing HTML elements programmatically.
+
+The :method:`Symfony\\Component\\BrowserKit\\AbstractBrowser::jsonRequest` method,
+which defines the same arguments as the ``request()`` method, is a shortcut to
+convert the request parameters into a JSON string and set the needed HTTP headers::
+
+    use Acme\Client;
+
+    $client = new Client();
+    // this encodes parameters as JSON and sets the required CONTENT_TYPE and HTTP_ACCEPT headers
+    $crawler = $client->jsonRequest('GET', '/', ['some_parameter' => 'some_value']);
+
+.. versionadded:: 5.3
+
+    The ``jsonRequest()`` method was introduced in Symfony 5.3.
 
 The :method:`Symfony\\Component\\BrowserKit\\AbstractBrowser::xmlHttpRequest` method,
 which defines the same arguments as the ``request()`` method, is a shortcut to
@@ -166,6 +174,32 @@ provides access to the form properties (e.g. ``$form->getUri()``,
 
     // submit that form
     $crawler = $client->submit($form);
+
+Custom Header Handling
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 5.2
+
+    The ``getHeaders()`` method was introduced in Symfony 5.2.
+
+The optional HTTP headers passed to the ``request()`` method follows the FastCGI
+request format (uppercase, underscores instead of dashes and prefixed with ``HTTP_``).
+Before saving those headers to the request, they are lower-cased, with ``HTTP_``
+stripped, and underscores turned to dashes.
+
+If you're making a request to an application that has special rules about header
+capitalization or punctuation, override the ``getHeaders()`` method, which must
+return an associative array of headers::
+
+    protected function getHeaders(Request $request): array
+    {
+        $headers = parent::getHeaders($request);
+        if (isset($request->getServer()['api_key'])) {
+            $headers['api_key'] = $request->getServer()['api_key'];
+        }
+
+        return $headers;
+    }
 
 Cookies
 -------
@@ -316,10 +350,6 @@ dedicated web crawler or scraper such as `Goutte`_::
     $openPullRequests = trim($browser->clickLink('Pull requests')->filter(
         '.table-list-header-toggle a:nth-child(1)'
     )->text());
-
-.. versionadded:: 4.3
-
-    The feature to make external HTTP requests was introduced in Symfony 4.3.
 
 Learn more
 ----------

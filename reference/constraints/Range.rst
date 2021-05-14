@@ -6,6 +6,7 @@ Validates that a given number or ``DateTime`` object is *between* some minimum a
 ==========  ===================================================================
 Applies to  :ref:`property or method <validation-property-target>`
 Options     - `groups`_
+            - `invalidDateTimeMessage`_
             - `invalidMessage`_
             - `max`_
             - `maxMessage`_
@@ -43,6 +44,23 @@ you might add the following:
              *      notInRangeMessage = "You must be between {{ min }}cm and {{ max }}cm tall to enter",
              * )
              */
+            protected $height;
+        }
+
+    .. code-block:: php-attributes
+
+        // src/Entity/Participant.php
+        namespace App\Entity;
+
+        use Symfony\Component\Validator\Constraints as Assert;
+
+        class Participant
+        {
+            #[Assert\Range(
+                min: 120,
+                max: 180,
+                notInRangeMessage: 'You must be between {{ min }}cm and {{ max }}cm tall to enter',
+            )]
             protected $height;
         }
 
@@ -124,6 +142,22 @@ date must lie within the current year like this:
             protected $startDate;
         }
 
+    .. code-block:: php-attributes
+
+        // src/Entity/Event.php
+        namespace App\Entity;
+
+        use Symfony\Component\Validator\Constraints as Assert;
+
+        class Event
+        {
+            #[Assert\Range(
+                min: 'first day of January',
+                max: 'first day of January next year',
+            )]
+            protected $startDate;
+        }
+
     .. code-block:: yaml
 
         # config/validator/validation.yaml
@@ -191,6 +225,22 @@ dates. If you want to fix the timezone, append it to the date string:
              *      max = "first day of January next year UTC"
              * )
              */
+            protected $startDate;
+        }
+
+    .. code-block:: php-attributes
+
+        // src/Entity/Event.php
+        namespace App\Entity;
+
+        use Symfony\Component\Validator\Constraints as Assert;
+
+        class Event
+        {
+            #[Assert\Range(
+                min: 'first day of January UTC',
+                max: 'first day of January next year UTC',
+            )]
             protected $startDate;
         }
 
@@ -264,6 +314,22 @@ can check that a delivery date starts within the next five hours like this:
             protected $deliveryDate;
         }
 
+    .. code-block:: php-attributes
+
+        // src/Entity/Order.php
+        namespace App\Entity;
+
+        use Symfony\Component\Validator\Constraints as Assert;
+
+        class Order
+        {
+            #[Assert\Range(
+                min: 'now',
+                max: '+5 hours',
+            )]
+            protected $deliveryDate;
+        }
+
     .. code-block:: yaml
 
         # config/validator/validation.yaml
@@ -316,13 +382,17 @@ Options
 
 .. include:: /reference/constraints/_groups-option.rst.inc
 
-``invalidMessage``
-~~~~~~~~~~~~~~~~~~
+``invalidDateTimeMessage``
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **type**: ``string`` **default**: ``This value should be a valid number.``
 
-The message that will be shown if the underlying value is not a number (per
-the :phpfunction:`is_numeric` PHP function).
+.. versionadded:: 5.2
+
+    The ``invalidDateTimeMessage`` option was introduced in Symfony 5.2.
+
+The message displayed when the ``min`` and ``max`` values are PHP datetimes but
+the given value is not.
 
 You can use the following parameters in this message:
 
@@ -331,6 +401,27 @@ Parameter        Description
 ===============  ==============================================================
 ``{{ value }}``  The current (invalid) value
 ===============  ==============================================================
+
+``invalidMessage``
+~~~~~~~~~~~~~~~~~~
+
+**type**: ``string`` **default**: ``This value should be a valid number.``
+
+The message displayed when the ``min`` and ``max`` values are numeric (per
+the :phpfunction:`is_numeric` PHP function) but the given value is not.
+
+You can use the following parameters in this message:
+
+===============  ==============================================================
+Parameter        Description
+===============  ==============================================================
+``{{ value }}``  The current (invalid) value
+``{{ label }}``  Corresponding form field label
+===============  ==============================================================
+
+.. versionadded:: 5.2
+
+    The ``{{ label }}`` parameter was introduced in Symfony 5.2.
 
 ``max``
 ~~~~~~~
@@ -363,11 +454,7 @@ Parameter        Description
 
 **type**: ``string``
 
-.. versionadded:: 4.4
-
-    The ``maxPropertyPath`` option was introduced in Symfony 4.4.
-
-It defines the object property whose value is used as `max`_ option.
+It defines the object property whose value is used as ``max`` option.
 
 For example, if you want to compare the ``$submittedDate`` property of some object
 with regard to the ``$deadline`` property of the same object, use
@@ -411,11 +498,7 @@ Parameter        Description
 
 **type**: ``string``
 
-.. versionadded:: 4.4
-
-    The ``minPropertyPath`` option was introduced in Symfony 4.4.
-
-It defines the object property whose value is used as `min`_ option.
+It defines the object property whose value is used as ``min`` option.
 
 For example, if you want to compare the ``$endDate`` property of some object
 with regard to the ``$startDate`` property of the same object, use
@@ -432,10 +515,6 @@ with regard to the ``$startDate`` property of the same object, use
 ~~~~~~~~~~~~~~~~~~~~~
 
 **type**: ``string`` **default**: ``This value should be between {{ min }} and {{ max }}.``
-
-.. versionadded:: 4.4
-
-    The ``notInRangeMessage`` option was introduced in Symfony 4.4.
 
 The message that will be shown if the underlying value is less than the
 `min`_ option or greater than the `max`_ option.

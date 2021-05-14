@@ -1,10 +1,6 @@
 PositiveOrZero
 ==============
 
-.. versionadded:: 4.3
-
-    The ``PositiveOrZero`` constraint was introduced in Symfony 4.3.
-
 Validates that a value is a positive number or equal to zero. If you don't
 want to allow zero as value, use :doc:`/reference/constraints/Positive` instead.
 
@@ -37,6 +33,19 @@ is positive or zero:
             /**
              * @Assert\PositiveOrZero
              */
+            protected $siblings;
+        }
+
+    .. code-block:: php-attributes
+
+        // src/Entity/Person.php
+        namespace App\Entity;
+
+        use Symfony\Component\Validator\Constraints as Assert;
+
+        class Person
+        {
+            #[Assert\PositiveOrZero]
             protected $siblings;
         }
 

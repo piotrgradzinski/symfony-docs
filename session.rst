@@ -55,18 +55,20 @@ sessions, check their default configuration:
     .. code-block:: php
 
         // config/packages/framework.php
-        $container->loadFromExtension('framework', [
-            'session' => [
+        use Symfony\Config\FrameworkConfig;
+
+        return static function (FrameworkConfig $framework) {
+            $framework->session()
                 // enables the support of sessions in the app
-                'enabled' => true,
+                ->enabled(true)
                 // ID of the service used for session storage
                 // NULL means that Symfony uses PHP default session mechanism
-                'handler_id' => null,
+                ->handlerId(null)
                 // improves the security of the cookies used for sessions
-                'cookie_secure' => 'auto',
-                'cookie_samesite' => 'lax',
-            ],
-        ]);
+                ->cookieSecure('auto')
+                ->cookieSamesite('lax')
+            ;
+        };
 
 Setting the ``handler_id`` config option to ``null`` means that Symfony will
 use the native PHP session mechanism. The session metadata files will be stored
@@ -112,13 +114,15 @@ session metadata files:
     .. code-block:: php
 
         // config/packages/framework.php
-        $container->loadFromExtension('framework', [
-            'session' => [
+        use Symfony\Config\FrameworkConfig;
+
+        return static function (FrameworkConfig $framework) {
+            $framework->session()
                 // ...
-                'handler_id' => 'session.handler.native_file',
-                'save_path' => '%kernel.project_dir%/var/sessions/%kernel.environment%',
-            ],
-        ]);
+                ->handlerId('session.handler.native_file')
+                ->savePath('%kernel.project_dir%/var/sessions/%kernel.environment%')
+            ;
+        };
 
 Check out the Symfony config reference to learn more about the other available
 :ref:`Session configuration options <config-framework-session>`. You can also
@@ -127,25 +131,26 @@ Check out the Symfony config reference to learn more about the other available
 Basic Usage
 -----------
 
-Symfony provides a session service that is injected in your services and
+The sessions is available througth the Request and the RequestStack.
+Symfony provides a request_stack service that is injected in your services and
 controllers if you type-hint an argument with
-:class:`Symfony\\Component\\HttpFoundation\\Session\\SessionInterface`::
+:class:`Symfony\\Component\\HttpFoundation\\RequestStack`::
 
-    use Symfony\Component\HttpFoundation\Session\SessionInterface;
+    use Symfony\Component\HttpFoundation\RequestStack;
 
     class SomeService
     {
-        private $session;
+        private $requestStack;
 
-        public function __construct(SessionInterface $session)
+        public function __construct(RequestStack $requestStack)
         {
-            $this->session = $session;
+            $this->requestStack = $requestStack;
         }
 
         public function someMethod()
         {
             // stores an attribute in the session for later reuse
-            $this->session->set('attribute-name', 'attribute-value');
+            $this->requestStack->getSession()->set('attribute-name', 'attribute-value');
 
             // gets an attribute by name
             $foo = $this->session->get('foo');
@@ -157,34 +162,80 @@ controllers if you type-hint an argument with
         }
     }
 
-.. tip::
+.. deprecated:: 5.3
 
-    Every ``SessionInterface`` implementation is supported. If you have your
-    own implementation, type-hint this in the argument instead.
+    The ``SessionInterface`` and ``session`` service were deprecated in
+    Symfony 5.3. Instead, inject the ``RequestStack`` service to get the session
+    object of the current request.
 
 Stored attributes remain in the session for the remainder of that user's session.
 By default, session attributes are key-value pairs managed with the
 :class:`Symfony\\Component\\HttpFoundation\\Session\\Attribute\\AttributeBag`
 class.
 
+.. deprecated:: 5.3
+
+    The ``NamespacedAttributeBag`` class is deprecated since Symfony 5.3.
+    If you need this feature, you will have to implement the class yourself.
+
 If your application needs are complex, you may prefer to use
 :ref:`namespaced session attributes <namespaced-attributes>` which are managed with the
 :class:`Symfony\\Component\\HttpFoundation\\Session\\Attribute\\NamespacedAttributeBag`
-class. Before using them, override the ``session`` service definition to replace
-the default ``AttributeBag`` by the ``NamespacedAttributeBag``:
+class. Before using them, override the ``session_listener`` service definition to build
+your ``Session`` object with the default ``AttributeBag`` by the ``NamespacedAttributeBag``:
 
 .. configuration-block::
 
     .. code-block:: yaml
 
         # config/services.yaml
-        session:
-            public: true
-            class: Symfony\Component\HttpFoundation\Session\Session
-            arguments: ['@session.storage', '@session.namespacedattributebag', '@session.flash_bag']
+        session.factory:
+            autoconfigure: true
+            class: App\Session\SessionFactory
+            arguments:
+            - '@request_stack'
+            - '@session.storage.factory'
+            - ['@session_listener', 'onSessionUsage']
+            - '@session.namespacedattributebag'
 
         session.namespacedattributebag:
             class: Symfony\Component\HttpFoundation\Session\Attribute\NamespacedAttributeBag
+
+.. code-block:: php
+
+    namespace App\Session;
+
+    use Symfony\Component\HttpFoundation\RequestStack;
+    use Symfony\Component\HttpFoundation\Session\Attribute\NamespacedAttributeBag;
+    use Symfony\Component\HttpFoundation\Session\Session;
+    use Symfony\Component\HttpFoundation\Session\SessionInterface;
+    use Symfony\Component\HttpFoundation\Session\Storage\SessionStorageFactoryInterface;
+
+    class SessionFactory
+    {
+        private $requestStack;
+        private $storageFactory;
+        private $usageReporter;
+        private $sessionAttributes;
+
+        public function __construct(RequestStack $requestStack, SessionStorageFactoryInterface $storageFactory, callable $usageReporter, NamespacedAttributeBag $sessionAttributes)
+        {
+            $this->requestStack = $requestStack;
+            $this->storageFactory = $storageFactory;
+            $this->usageReporter = $usageReporter;
+            $this->sessionAttributes = $sessionAttributes;
+        }
+
+        public function createSession(): SessionInterface
+        {
+            return new Session(
+                $this->storageFactory->createStorage($this->requestStack->getMainRequest()),
+                $this->sessionAttributes,
+                null,
+                $this->usageReporter
+            );
+        }
+    }
 
 .. _session-avoid-start:
 

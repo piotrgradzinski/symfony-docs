@@ -67,12 +67,6 @@ The most common way to listen to an event is to register an **event listener**::
     Check out the :doc:`Symfony events reference </reference/events>` to see
     what type of object each event provides.
 
-.. versionadded:: 4.3
-
-    The :class:`Symfony\\Component\\HttpKernel\\Event\\ExceptionEvent` class was
-    introduced in Symfony 4.3. In previous versions it was called
-    ``Symfony\Component\HttpKernel\Event\GetResponseForExceptionEvent``.
-
 Now that the class is created, you need to register it as a service and
 notify Symfony that it is a "listener" on the ``kernel.exception`` event by
 using a special "tag":
@@ -106,11 +100,17 @@ using a special "tag":
     .. code-block:: php
 
         // config/services.php
+        namespace Symfony\Component\DependencyInjection\Loader\Configurator;
+
         use App\EventListener\ExceptionListener;
 
-        $container->register(ExceptionListener::class)
-            ->tag('kernel.event_listener', ['event' => 'kernel.exception'])
-        ;
+        return function(ContainerConfigurator $configurator) {
+            $services = $configurator->services();
+
+            $services->set(ExceptionListener::class)
+                ->tag('kernel.event_listener', ['event' => 'kernel.exception'])
+            ;
+        };
 
 Symfony follows this logic to decide which method to call inside the event
 listener class:
@@ -206,10 +206,10 @@ the ``EventSubscriber`` directory. Symfony takes care of the rest.
 Request Events, Checking Types
 ------------------------------
 
-A single page can make several requests (one master request, and then multiple
+A single page can make several requests (one main request, and then multiple
 sub-requests - typically when :ref:`embedding controllers in templates <templates-embed-controllers>`).
 For the core Symfony events, you might need to check to see if the event is for
-a "master" request or a "sub request"::
+a "main" request or a "sub request"::
 
     // src/EventListener/RequestListener.php
     namespace App\EventListener;
@@ -220,8 +220,10 @@ a "master" request or a "sub request"::
     {
         public function onKernelRequest(RequestEvent $event)
         {
-            if (!$event->isMasterRequest()) {
-                // don't do anything if it's not the master request
+            // The isMainRequest() method was introduced in Symfony 5.3.
+            // In previous versions it was called isMasterRequest()
+            if (!$event->isMainRequest()) {
+                // don't do anything if it's not the main request
                 return;
             }
 
@@ -275,11 +277,6 @@ name (FQCN) of the corresponding event class::
         }
     }
 
-.. versionadded:: 4.3
-
-    Referring Symfony's core events via the FQCN of the event class is possible
-    since Symfony 4.3.
-
 Internally, the event FQCN are treated as aliases for the original event names.
 Since the mapping already happens when compiling the service container, event
 listeners and subscribers using FQCN instead of event names will appear under
@@ -310,10 +307,6 @@ The compiler pass will always extend the existing list of aliases. Because of
 that, it is safe to register multiple instances of the pass with different
 configurations.
 
-.. versionadded:: 4.4
-
-    The ``AddEventAliasesPass`` class was introduced in Symfony 4.4.
-
 Debugging Event Listeners
 -------------------------
 
@@ -330,6 +323,29 @@ its name:
 .. code-block:: terminal
 
     $ php bin/console debug:event-dispatcher kernel.exception
+
+or can get everything which partial matches the event name:
+
+.. code-block:: terminal
+
+    $ php bin/console debug:event-dispatcher kernel // matches "kernel.exception", "kernel.response" etc.
+    $ php bin/console debug:event-dispatcher Security // matches "Symfony\Component\Security\Http\Event\CheckPassportEvent"
+
+.. versionadded:: 5.3
+
+    The ability to match partial event names was introduced in Symfony 5.3.
+
+The :doc:`new experimental Security </security/experimental_authenticators>`
+system adds an event dispatcher per firewall. Use the ``--dispatcher`` option to
+get the registered listeners for a particular event dispatcher:
+
+.. code-block:: terminal
+
+    $ php bin/console debug:event-dispatcher --dispatcher=security.event_dispatcher.main
+
+.. versionadded:: 5.3
+
+    The ``dispatcher`` option was introduced in Symfony 5.3.
 
 Learn more
 ----------

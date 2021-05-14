@@ -55,13 +55,13 @@ configuration:
     .. code-block:: php
 
         // config/packages/twig.php
-        $container->loadFromExtension('twig', [
-            'form_themes' => [
-                'bootstrap_4_layout.html.twig',
-            ],
+        use Symfony\Config\TwigConfig;
+
+        return static function (TwigConfig $twig) {
+            $twig->formThemes(['bootstrap_4_layout.html.twig']);
 
             // ...
-        ]);
+        };
 
 If you prefer to apply the Bootstrap styles on a form to form basis, include the
 ``form_theme`` tag in the templates where those forms are used:
@@ -114,10 +114,6 @@ for **all** users.
 
 Custom Forms
 ------------
-
-.. versionadded:: 4.4
-
-    Support for the ``switch-custom`` class was introduced in Symfony 4.4.
 
 Bootstrap 4 has a feature called "`custom forms`_". You can enable that on your
 Symfony Form ``RadioType`` and ``CheckboxType`` by adding some classes to the label:

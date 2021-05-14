@@ -96,20 +96,12 @@ Below are common examples of valid DSNs showing a combination of available value
     );
 
 `Redis Sentinel`_, which provides high availability for Redis, is also supported
-when using the Predis library. Use the ``redis_sentinel`` parameter to set the
-name of your service group::
+when using the PHP Redis Extension v5.2+ or the Predis library. Use the ``redis_sentinel``
+parameter to set the name of your service group::
 
     RedisAdapter::createConnection(
         'redis:?host[redis1:26379]&host[redis2:26379]&host[redis3:26379]&redis_sentinel=mymaster'
     );
-
-.. versionadded:: 4.2
-
-    The option to define multiple servers in a single DSN was introduced in Symfony 4.2.
-
-.. versionadded:: 4.4
-
-    Redis Sentinel support was introduced in Symfony 4.4.
 
 .. note::
 

@@ -59,6 +59,32 @@ This will check if ``emailAddress`` is an instance of ``Symfony\Component\Mime\A
             protected $accessCode;
         }
 
+    .. code-block:: php-attributes
+
+        // src/Entity/Author.php
+        namespace App\Entity;
+
+        use Symfony\Component\Mime\Address;
+        use Symfony\Component\Validator\Constraints as Assert;
+
+        class Author
+        {
+            #[Assert\Type(Address::class)]
+            protected $emailAddress;
+
+            #[Assert\Type('string')]
+            protected $firstName;
+
+            #[Assert\Type(
+                type: 'integer',
+                message: 'The value {{ value }} is not a valid {{ type }}.',
+            )]
+            protected $age;
+
+            #[Assert\Type(type: ['alpha', 'digit'])]
+            protected $accessCode;
+        }
+
     .. code-block:: yaml
 
         # config/validator/validation.yaml
@@ -143,11 +169,6 @@ This will check if ``emailAddress`` is an instance of ``Symfony\Component\Mime\A
             }
         }
 
-.. versionadded:: 4.4
-
-    The feature to define multiple types in the ``type`` option was introduced
-    in Symfony 4.4.
-
 .. include:: /reference/constraints/_null-values-are-valid.rst.inc
 
 Options
@@ -169,7 +190,12 @@ Parameter        Description
 ===============  ==============================================================
 ``{{ type }}``   The expected type
 ``{{ value }}``  The current (invalid) value
+``{{ label }}``  Corresponding form field label
 ===============  ==============================================================
+
+.. versionadded:: 5.2
+
+    The ``{{ label }}`` parameter was introduced in Symfony 5.2.
 
 .. include:: /reference/constraints/_payload-option.rst.inc
 
@@ -179,11 +205,6 @@ Parameter        Description
 ~~~~~~~~
 
 **type**: ``string`` or ``array`` [:ref:`default option <validation-default-option>`]
-
-.. versionadded:: 4.4
-
-    The feature to define multiple types in the ``type`` option was introduced
-    in Symfony 4.4.
 
 This required option defines the type or collection of types allowed for the
 given value. Each type is either the FQCN (fully qualified class name) of some

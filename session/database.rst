@@ -90,7 +90,7 @@ and ``RedisProxy``:
                 arguments:
                     - '@Redis'
                     # you can optionally pass an array of options. The only options are 'prefix' and 'ttl',
-                    # which define the prefix to use for the keys to avoid collision on the Redis server 
+                    # which define the prefix to use for the keys to avoid collision on the Redis server
                     # and the expiration time for any given entry (in seconds), defaults are 'sf_s' and null:
                     # - { 'prefix' => 'my_prefix', 'ttl' => 600 }
 
@@ -101,7 +101,7 @@ and ``RedisProxy``:
             <service id="Symfony\Component\HttpFoundation\Session\Storage\Handler\RedisSessionHandler">
                 <argument type="service" id="Redis"/>
                 <!-- you can optionally pass an array of options. The only options are 'prefix' and 'ttl',
-                     which define the prefix to use for the keys to avoid collision on the Redis server 
+                     which define the prefix to use for the keys to avoid collision on the Redis server
                      and the expiration time for any given entry (in seconds), defaults are 'sf_s' and null:
                 <argument type="collection">
                     <argument key="prefix">my_prefix</argument>
@@ -119,7 +119,7 @@ and ``RedisProxy``:
             ->addArgument(
                 new Reference('Redis'),
                 // you can optionally pass an array of options. The only options are 'prefix' and 'ttl',
-                // which define the prefix to use for the keys to avoid collision on the Redis server 
+                // which define the prefix to use for the keys to avoid collision on the Redis server
                 // and the expiration time for any given entry (in seconds), defaults are 'sf_s' and null:
                 // ['prefix' => 'my_prefix', 'ttl' => 600],
             );
@@ -149,14 +149,14 @@ configuration option to tell Symfony to use this service as the session handler:
 
         // config/packages/framework.php
         use Symfony\Component\HttpFoundation\Session\Storage\Handler\RedisSessionHandler;
+        use Symfony\Config\FrameworkConfig;
 
-        // ...
-        $container->loadFromExtension('framework', [
+        return static function (FrameworkConfig $framework) {
             // ...
-            'session' => [
-                'handler_id' => RedisSessionHandler::class,
-            ],
-        ]);
+            $framework->session()
+                ->handlerId(RedisSessionHandler::class)
+            ;
+        };
 
 That's all! Symfony will now use your Redis server to read and write the session
 data. The main drawback of this solution is that Redis does not perform session
@@ -220,16 +220,32 @@ first register a new handler service with your database credentials:
     .. code-block:: php
 
         // config/services.php
+        namespace Symfony\Component\DependencyInjection\Loader\Configurator;
+
         use Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler;
 
-        $storageDefinition = $container->autowire(PdoSessionHandler::class)
-            ->setArguments([
-                '%env(DATABASE_URL)%',
-                // you can also use PDO configuration, but requires passing two arguments:
-                // 'mysql:dbname=mydatabase; host=myhost; port=myport',
-                // ['db_username' => 'myuser', 'db_password' => 'mypassword'],
-            ])
-        ;
+        return static function (ContainerConfigurator $container) {
+            $services = $configurator->services();
+
+            $services->set(PdoSessionHandler::class)
+                ->args([
+                    '%env(DATABASE_URL)%',
+                    // you can also use PDO configuration, but requires passing two arguments:
+                    // 'mysql:dbname=mydatabase; host=myhost; port=myport',
+                    // ['db_username' => 'myuser', 'db_password' => 'mypassword'],
+                ])
+            ;
+        };
+
+.. tip::
+
+    When using MySQL as the database, the DSN defined in ``DATABASE_URL`` can
+    contain the ``charset`` and ``unix_socket`` options as query string parameters.
+
+    .. versionadded:: 5.3
+
+        The support for ``charset`` and ``unix_socket`` options was introduced
+        in Symfony 5.3.
 
 Next, use the :ref:`handler_id <config-framework-session-handler-id>`
 configuration option to tell Symfony to use this service as the session handler:
@@ -257,14 +273,14 @@ configuration option to tell Symfony to use this service as the session handler:
 
         // config/packages/framework.php
         use Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler;
+        use Symfony\Config\FrameworkConfig;
 
-        // ...
-        $container->loadFromExtension('framework', [
+        return static function (FrameworkConfig $framework) {
             // ...
-            'session' => [
-                'handler_id' => PdoSessionHandler::class,
-            ],
-        ]);
+            $framework->session()
+                ->handlerId(PdoSessionHandler::class)
+            ;
+        };
 
 Configuring the Session Table and Column Names
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -309,15 +325,20 @@ passed to the ``PdoSessionHandler`` service:
     .. code-block:: php
 
         // config/services.php
-        use Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler;
-        // ...
+        namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
-        $container->autowire(PdoSessionHandler::class)
-            ->setArguments([
-                '%env(DATABASE_URL)%',
-                ['db_table' => 'customer_session', 'db_id_col' => 'guid'],
-            ])
-        ;
+        use Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler;
+
+        return static function (ContainerConfigurator $container) {
+            $services = $configurator->services();
+
+            $services->set(PdoSessionHandler::class)
+                ->args([
+                    '%env(DATABASE_URL)%',
+                    ['db_table' => 'customer_session', 'db_id_col' => 'guid'],
+                ])
+            ;
+        };
 
 These are parameters that you can configure:
 
@@ -471,13 +492,19 @@ the MongoDB connection as argument:
     .. code-block:: php
 
         // config/services.php
-        use Symfony\Component\HttpFoundation\Session\Storage\Handler\MongoDbSessionHandler;
+        namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
-        $storageDefinition = $container->autowire(MongoDbSessionHandler::class)
-            ->setArguments([
-                new Reference('doctrine_mongodb.odm.default_connection'),
-            ])
-        ;
+        use Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler;
+
+        return static function (ContainerConfigurator $container) {
+            $services = $configurator->services();
+
+            $services->set(MongoDbSessionHandler::class)
+                ->args([
+                    service('doctrine_mongodb.odm.default_connection'),
+                ])
+            ;
+        };
 
 Next, use the :ref:`handler_id <config-framework-session-handler-id>`
 configuration option to tell Symfony to use this service as the session handler:
@@ -505,14 +532,14 @@ configuration option to tell Symfony to use this service as the session handler:
 
         // config/packages/framework.php
         use Symfony\Component\HttpFoundation\Session\Storage\Handler\MongoDbSessionHandler;
+        use Symfony\Config\FrameworkConfig;
 
-        // ...
-        $container->loadFromExtension('framework', [
+        return static function (FrameworkConfig $framework) {
             // ...
-            'session' => [
-                'handler_id' => MongoDbSessionHandler::class,
-            ],
-        ]);
+            $framework->session()
+                ->handlerId(MongoDbSessionHandler::class)
+            ;
+        };
 
 .. note::
 
@@ -574,15 +601,20 @@ configure these values with the second argument passed to the
     .. code-block:: php
 
         // config/services.php
-        use Symfony\Component\HttpFoundation\Session\Storage\Handler\MongoDbSessionHandler;
-        // ...
+        namespace Symfony\Component\DependencyInjection\Loader\Configurator;
 
-        $container->autowire(MongoDbSessionHandler::class)
-            ->setArguments([
-                '...',
-                ['id_field' => '_guid', 'expiry_field' => 'eol'],
-            ])
-        ;
+        use Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler;
+
+        return static function (ContainerConfigurator $container) {
+            $services = $configurator->services();
+
+            $services->set(MongoDbSessionHandler::class)
+                ->args([
+                    service('doctrine_mongodb.odm.default_connection'),
+                    ['id_field' => '_guid', 'expiry_field' => 'eol'],
+                ])
+            ;
+        };
 
 These are parameters that you can configure:
 

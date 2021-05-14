@@ -42,7 +42,6 @@ Configuration
 
 * `debug`_
 * `default_path`_
-* `exception_controller`_
 * `form_themes`_
 * `globals`_
 * `number_format`_
@@ -196,29 +195,6 @@ The path to the directory where Symfony will look for the application Twig
 templates by default. If you store the templates in more than one directory, use
 the :ref:`paths <config-twig-paths>`  option too.
 
-.. _config-twig-exception-controller:
-
-exception_controller
-~~~~~~~~~~~~~~~~~~~~
-
-**type**: ``string`` **default**: ``twig.controller.exception:showAction``
-
-.. deprecated:: 4.4
-
-    The ``exception_controller`` configuration option was deprecated in Symfony 4.4.
-    Set it to ``null`` and use the new ``error_controller`` option under ``framework``
-    configuration instead.
-
-This is the controller that is activated after an exception is thrown anywhere
-in your application. The default controller
-(:class:`Symfony\\Bundle\\TwigBundle\\Controller\\ExceptionController`)
-is what's responsible for rendering specific templates under different error
-conditions (see :doc:`/controller/error_pages`). Modifying this
-option is advanced. If you need to customize an error page you should use
-the previous link. If you need to perform some behavior on an exception,
-you should add an :doc:`event listener </event_dispatcher>` to the
-:ref:`kernel.exception event <kernel-kernel.exception>`.
-
 .. _config-twig-form-themes:
 
 form_themes
@@ -259,13 +235,16 @@ all the forms of the application:
     .. code-block:: php
 
         // config/packages/twig.php
-        $container->loadFromExtension('twig', [
-            'form_themes' => [
+        use Symfony\Config\TwigConfig;
+
+        return static function (TwigConfig $twig) {
+            $twig->formThemes([
                 'bootstrap_4_layout.html.twig',
                 'form/my_theme.html.twig',
-            ],
+            ]);
+
             // ...
-        ]);
+        };
 
 The order in which themes are defined is important because each theme overrides
 all the previous one. When rendering a form field whose block is not defined in
@@ -372,13 +351,14 @@ the directory defined in the :ref:`default_path option <config-twig-default-path
     .. code-block:: php
 
         // config/packages/twig.php
-        $container->loadFromExtension('twig', [
+        use Symfony\Config\TwigConfig;
+
+        return static function (TwigConfig $twig) {
             // ...
-            'paths' => [
-                'email/default/templates' => null,
-                'backend/templates' => 'admin',
-            ],
-        ]);
+
+            $twig->path('email/default/templates', null);
+            $twig->path('backend/templates', 'admin');
+        };
 
 Read more about :ref:`template directories and namespaces <templates-namespaces>`.
 
@@ -387,7 +367,7 @@ Read more about :ref:`template directories and namespaces <templates-namespaces>
 strict_variables
 ~~~~~~~~~~~~~~~~
 
-**type**: ``boolean`` **default**: ``false``
+**type**: ``boolean`` **default**: ``%kernel.debug%``
 
 If set to ``true``, Symfony shows an exception whenever a Twig variable,
 attribute or method doesn't exist. If set to ``false`` these errors are ignored

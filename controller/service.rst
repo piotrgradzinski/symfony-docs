@@ -41,6 +41,22 @@ a service like: ``App\Controller\HelloController::index``:
             }
         }
 
+    .. code-block:: php-attributes
+
+        // src/Controller/HelloController.php
+        namespace App\Controller;
+
+        use Symfony\Component\Routing\Annotation\Route;
+
+        class HelloController
+        {
+            #[Route('/hello', name: 'hello', methods: ['GET'])]
+            public function index()
+            {
+                // ...
+            }
+        }
+
     .. code-block:: yaml
 
         # config/routes.yaml
@@ -97,6 +113,23 @@ which is a common practice when following the `ADR pattern`_
         /**
          * @Route("/hello/{name}", name="hello")
          */
+        class Hello
+        {
+            public function __invoke($name = 'World')
+            {
+                return new Response(sprintf('Hello %s!', $name));
+            }
+        }
+
+    .. code-block:: php-attributes
+
+        // src/Controller/Hello.php
+        namespace App\Controller;
+
+        use Symfony\Component\HttpFoundation\Response;
+        use Symfony\Component\Routing\Annotation\Route;
+
+        #[Route('/hello/{name}', name: 'hello')]
         class Hello
         {
             public function __invoke($name = 'World')
@@ -182,12 +215,12 @@ Base Controller Methods and Their Service Replacements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The best way to see how to replace base ``Controller`` convenience methods is to
-look at the `ControllerTrait`_ that holds its logic.
+look at the `AbstractController`_ class that holds its logic.
 
 If you want to know what type-hints to use for each service, see the
 ``getSubscribedServices()`` method in `AbstractController`_.
 
-.. _`Controller class source code`: https://github.com/symfony/symfony/blob/4.4/src/Symfony/Bundle/FrameworkBundle/Controller/ControllerTrait.php
-.. _`ControllerTrait`: https://github.com/symfony/symfony/blob/4.4/src/Symfony/Bundle/FrameworkBundle/Controller/ControllerTrait.php
+.. _`Controller class source code`: https://github.com/symfony/symfony/blob/master/src/Symfony/Bundle/FrameworkBundle/Controller/AbstractController.php
+.. _`AbstractController`: https://github.com/symfony/symfony/blob/master/src/Symfony/Bundle/FrameworkBundle/Controller/AbstractController.php
 .. _`AbstractController`: https://github.com/symfony/symfony/blob/master/src/Symfony/Bundle/FrameworkBundle/Controller/AbstractController.php
 .. _`ADR pattern`: https://en.wikipedia.org/wiki/Action%E2%80%93domain%E2%80%93responder

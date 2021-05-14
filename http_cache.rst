@@ -155,7 +155,7 @@ header to the response. You can also use the ``trace_level`` config
 option and set it to either ``none``, ``short`` or ``full`` to
 add this information.
 
-``short`` will add the information for the master request only.
+``short`` will add the information for the main request only.
 It's written in a concise way that makes it easy to record the
 information in your server log files. For example, in Apache you can
 use ``%{X-Symfony-Cache}o`` in ``LogFormat`` format statements.
@@ -166,11 +166,6 @@ cache efficiency of your routes.
 
     You can change the name of the header used for the trace
     information using the ``trace_header`` config option.
-
-.. versionadded:: 4.3
-
-    The ``trace_level`` and ``trace_header`` configuration options
-    were introduced in Symfony 4.3.
 
 .. _http-cache-symfony-versus-varnish:
 
@@ -348,15 +343,27 @@ the most useful ones::
 Additionally, most cache-related HTTP headers can be set via the single
 :method:`Symfony\\Component\\HttpFoundation\\Response::setCache` method::
 
-    // sets cache settings in one call
+    // use this method to set several cache settings in one call
+    // (this example lists all the available cache settings)
     $response->setCache([
-        'etag'          => $etag,
-        'last_modified' => $date,
-        'max_age'       => 10,
-        's_maxage'      => 10,
-        'public'        => true,
-        // 'private'    => true,
+        'must_revalidate'  => false,
+        'no_cache'         => false,
+        'no_store'         => false,
+        'no_transform'     => false,
+        'public'           => true,
+        'private'          => false,
+        'proxy_revalidate' => false,
+        'max_age'          => 600,
+        's_maxage'         => 600,
+        'immutable'        => true,
+        'last_modified'    => new \DateTime(),
+        'etag'             => 'abcdef'
     ]);
+
+.. versionadded:: 5.1
+
+    The ``must_revalidate``, ``no_cache``, ``no_store``, ``no_transform`` and
+    ``proxy_revalidate`` directives were introduced in Symfony 5.1.
 
 Cache Invalidation
 ------------------

@@ -6,7 +6,6 @@ The Intl Component
 ==================
 
     This component provides access to the localization data of the `ICU library`_.
-    It also provides a PHP replacement layer for the C `intl extension`_.
 
 .. caution::
 
@@ -29,30 +28,6 @@ Installation
     $ composer require symfony/intl
 
 .. include:: /components/require_autoload.rst.inc
-
-If you install the component via Composer, the following classes and functions
-of the intl extension will be automatically provided if the intl extension is
-not loaded:
-
-* :phpclass:`Collator`
-* :phpclass:`IntlDateFormatter`
-* :phpclass:`Locale`
-* :phpclass:`NumberFormatter`
-* :phpfunction:`intl_error_name`
-* :phpfunction:`intl_is_failure`
-* :phpfunction:`intl_get_error_code`
-* :phpfunction:`intl_get_error_message`
-
-When the intl extension is not available, the following classes are used to
-replace the intl classes:
-
-* :class:`Symfony\\Component\\Intl\\Collator\\Collator`
-* :class:`Symfony\\Component\\Intl\\DateFormatter\\IntlDateFormatter`
-* :class:`Symfony\\Component\\Intl\\Locale\\Locale`
-* :class:`Symfony\\Component\\Intl\\NumberFormatter\\NumberFormatter`
-* :class:`Symfony\\Component\\Intl\\Globals\\IntlGlobals`
-
-Composer automatically exposes these classes in the global namespace.
 
 Accessing ICU Data
 ------------------
@@ -120,14 +95,6 @@ You may convert codes between two-letter alpha2 and three-letter alpha3 codes::
 
     $alpha2Code = Languages::getAlpha2Code($alpha3Code);
 
-.. versionadded:: 4.3
-
-    The ``Languages`` class was introduced in Symfony 4.3.
-
-.. versionadded:: 4.4
-
-    The full support for alpha3 codes was introduced in Symfony 4.4.
-
 The ``Scripts`` class provides access to the optional four-letter script code
 that can follow the language code according to the `Unicode ISO 15924 Registry`_
 (e.g. ``HANS`` in ``zh_HANS`` for simplified Chinese and ``HANT`` in ``zh_HANT``
@@ -158,10 +125,6 @@ If the given script code doesn't exist, the methods trigger a
 to catching the exception, you can also check if a given script code is valid::
 
     $isValidScript = Scripts::exists($scriptCode);
-
-.. versionadded:: 4.3
-
-    The ``Scripts`` class was introduced in Symfony 4.3.
 
 Country Names
 ~~~~~~~~~~~~~
@@ -219,14 +182,6 @@ You may convert codes between two-letter alpha2 and three-letter alpha3 codes::
 
     $alpha2Code = Countries::getAlpha2Code($alpha3Code);
 
-.. versionadded:: 4.3
-
-    The ``Countries`` class was introduced in Symfony 4.3.
-
-.. versionadded:: 4.4
-
-    The support for alpha3 codes was introduced in Symfony 4.4.
-
 Locales
 ~~~~~~~
 
@@ -262,10 +217,6 @@ to catching the exception, you can also check if a given locale code is valid::
 
     $isValidLocale = Locales::exists($localeCode);
 
-.. versionadded:: 4.3
-
-    The ``Locales`` class was introduced in Symfony 4.3.
-
 Currencies
 ~~~~~~~~~~
 
@@ -286,15 +237,45 @@ as some of their information (symbol, fraction digits, etc.)::
     $symbol = Currencies::getSymbol('INR');
     // => '₹'
 
-    $fractionDigits = Currencies::getFractionDigits('INR');
-    // => 2
+The fraction digits methods return the number of decimal digits to display when
+formatting numbers with this currency. Depending on the currency, this value
+can change if the number is used in cash transactions or in other scenarios
+(e.g. accounting)::
 
-    $roundingIncrement = Currencies::getRoundingIncrement('INR');
-    // => 0
+    // Indian rupee defines the same value for both
+    $fractionDigits = Currencies::getFractionDigits('INR');         // returns: 2
+    $cashFractionDigits = Currencies::getCashFractionDigits('INR'); // returns: 2
 
-All methods (except for ``getFractionDigits()`` and ``getRoundingIncrement()``)
-accept the translation locale as the last, optional parameter, which defaults to
-the current default locale::
+    // Swedish krona defines different values
+    $fractionDigits = Currencies::getFractionDigits('SEK');         // returns: 2
+    $cashFractionDigits = Currencies::getCashFractionDigits('SEK'); // returns: 0
+
+.. versionadded:: 5.3
+
+    The ``getCashFractionDigits()`` method was introduced in Symfony 5.3.
+
+Some currencies require to round numbers to the nearest increment of some value
+(e.g. 5 cents). This increment might be different if numbers are formatted for
+cash transactions or other scenarios (e.g. accounting)::
+
+    // Indian rupee defines the same value for both
+    $roundingIncrement = Currencies::getRoundingIncrement('INR');         // returns: 0
+    $cashRoundingIncrement = Currencies::getCashRoundingIncrement('INR'); // returns: 0
+
+    // Canadian dollar defines different values because they have eliminated
+    // the smaller coins (1-cent and 2-cent) and prices in cash must be rounded to
+    // 5 cents (e.g. if price is 7.42 you pay 7.40; if price is 7.48 you pay 7.50)
+    $roundingIncrement = Currencies::getRoundingIncrement('CAD');         // returns: 0
+    $cashRoundingIncrement = Currencies::getCashRoundingIncrement('CAD'); // returns: 5
+
+.. versionadded:: 5.3
+
+    The ``getCashRoundingIncrement()`` method was introduced in Symfony 5.3.
+
+All methods (except for ``getFractionDigits()``, ``getCashFractionDigits()``,
+``getRoundingIncrement()`` and ``getCashRoundingIncrement()``) accept the
+translation locale as the last, optional parameter, which defaults to the
+current default locale::
 
     $currencies = Currencies::getNames('de');
     // => ['AFN' => 'Afghanischer Afghani', 'EGP' => 'Ägyptisches Pfund', ...]
@@ -307,10 +288,6 @@ If the given currency code doesn't exist, the methods trigger a
 to catching the exception, you can also check if a given currency code is valid::
 
     $isValidCurrency = Currencies::exists($currencyCode);
-
-.. versionadded:: 4.3
-
-    The ``Currencies`` class was introduced in Symfony 4.3.
 
 .. _component-intl-timezones:
 
@@ -390,10 +367,6 @@ to catching the exception, you can also check if a given timezone ID is valid::
 
     $isValidTimezone = Timezones::exists($timezoneId);
 
-.. versionadded:: 4.3
-
-    The ``Timezones`` class was introduced in Symfony 4.3.
-
 Learn more
 ----------
 
@@ -407,7 +380,6 @@ Learn more
     /reference/forms/types/locale
     /reference/forms/types/timezone
 
-.. _intl extension: https://www.php.net/manual/en/book.intl.php
 .. _install the intl extension: https://www.php.net/manual/en/intl.setup.php
 .. _ICU library: http://site.icu-project.org/
 .. _`Unicode ISO 15924 Registry`: https://www.unicode.org/iso15924/iso15924-codes.html

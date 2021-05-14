@@ -65,7 +65,7 @@ through a **Service Locator**, a separate lazy-loaded container.
 Defining a Service Subscriber
 -----------------------------
 
-First, turn ``CommandBus`` into an implementation of :class:`Symfony\\Component\\DependencyInjection\\ServiceSubscriberInterface`.
+First, turn ``CommandBus`` into an implementation of :class:`Symfony\\Contracts\\Service\\ServiceSubscriberInterface`.
 Use its ``getSubscribedServices()`` method to include as many services as needed
 in the service subscriber and change the type hint of the container to
 a PSR-11 ``ContainerInterface``::
@@ -299,15 +299,6 @@ argument of type ``service_locator``:
                 ])]);
         };
 
-.. versionadded:: 4.2
-
-    The ability to add services without specifying an array key was introduced
-    in Symfony 4.2.
-
-.. versionadded:: 4.2
-
-    The ``service_locator`` argument type was introduced in Symfony 4.2.
-
 As shown in the previous sections, the constructor of the ``CommandBus`` class
 must type-hint its argument with ``ContainerInterface``. Then, you can get any of
 the service locator services via their ID (e.g. ``$this->locator->get('App\FooCommand')``).
@@ -381,9 +372,10 @@ other services. To do so, create a new service definition using the
             $services = $configurator->services();
 
             $services->set('app.command_handler_locator', ServiceLocator::class)
+                // In versions earlier to Symfony 5.1 the service() function was called ref()
                 ->args([[
-                    'App\FooCommand' => ref('app.command_handler.foo'),
-                    'App\BarCommand' => ref('app.command_handler.bar'),
+                    'App\FooCommand' => service('app.command_handler.foo'),
+                    'App\BarCommand' => service('app.command_handler.bar'),
                 ]])
                 // if you are not using the default service autoconfiguration,
                 // add the following tag to the service definition:
@@ -393,16 +385,15 @@ other services. To do so, create a new service definition using the
             // if the element has no key, the ID of the original service is used
             $services->set('app.another_command_handler_locator', ServiceLocator::class)
                 ->args([[
-                    ref('app.command_handler.baz'),
+                    service('app.command_handler.baz'),
                 ]])
             ;
         };
 
-.. versionadded:: 4.1
+.. note::
 
-    The service locator autoconfiguration was introduced in Symfony 4.1. In
-    previous Symfony versions you always needed to add the
-    ``container.service_locator`` tag explicitly.
+    The services defined in the service locator argument must include keys,
+    which later become their unique identifiers inside the locator.
 
 Now you can inject the service locator in any other services:
 
@@ -443,7 +434,7 @@ Now you can inject the service locator in any other services:
             $services = $configurator->services();
 
             $services->set(CommandBus::class)
-                ->args([ref('app.command_handler_locator')]);
+                ->args([service('app.command_handler_locator')]);
         };
 
 Using Service Locators in Compiler Passes

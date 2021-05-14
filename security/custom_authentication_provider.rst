@@ -218,7 +218,10 @@ the ``PasswordDigest`` header value matches with the user's password::
 
         public function authenticate(TokenInterface $token): WsseUserToken
         {
-            $user = $this->userProvider->loadUserByUsername($token->getUsername());
+            // The loadUserByIdentifier() and getUserIdentifier() methods were
+            // introduced in Symfony 5.3. In previous versions they were called
+            // loadUserByUsername() and getUsername() respectively
+            $user = $this->userProvider->loadUserByIdentifier($token->getUserIdentifier());
 
             if ($user && $this->validateDigest($token->digest, $token->nonce, $token->created, $user->getPassword())) {
                 $authenticatedToken = new WsseUserToken($user->getRoles());
@@ -307,7 +310,7 @@ create a class which implements
 
     class WsseFactory implements SecurityFactoryInterface
     {
-        public function create(ContainerBuilder $container, $id, $config, $userProvider, $defaultEntryPoint): array
+        public function create(ContainerBuilder $container, string $id, array $config, string $userProvider, ?string $defaultEntryPoint): array
         {
             $providerId = 'security.authentication.provider.wsse.'.$id;
             $container
@@ -410,7 +413,7 @@ to service ids that may not exist yet: ``App\Security\Authentication\Provider\Ws
 
             <services>
                 <service id="App\Security\Authentication\Provider\WsseProvider">
-                    <argument key="$cachePool" type="service" id="cache.app"></argument>
+                    <argument key="$cachePool" type="service" id="cache.app"/>
                 </service>
 
                 <service id="App\Security\Firewall\WsseListener">
@@ -433,13 +436,14 @@ to service ids that may not exist yet: ``App\Security\Authentication\Provider\Ws
             $services = $configurator->services();
 
             $services->set(WsseProvider::class)
-                ->arg('$cachePool', ref('cache.app'))
+                ->arg('$cachePool', service('cache.app'))
             ;
 
             $services->set(WsseListener::class)
                 ->args([
-                    ref('security.token_storage'),
-                    ref('security.authentication.manager'),
+                    // In versions earlier to Symfony 5.1 the service() function was called ref()
+                    service('security.token_storage'),
+                    service('security.authentication.manager'),
                 ])
             ;
         };
@@ -488,7 +492,9 @@ You are finished! You can now define parts of your app as under WSSE protection.
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xmlns:srv="http://symfony.com/schema/dic/services"
             xsi:schemaLocation="http://symfony.com/schema/dic/services
-                https://symfony.com/schema/dic/services/services-1.0.xsd">
+                https://symfony.com/schema/dic/services/services-1.0.xsd
+                http://symfony.com/schema/dic/security
+                https://symfony.com/schema/dic/security/security-1.0.xsd">
 
             <config>
                 <!-- ... -->
@@ -568,7 +574,7 @@ in order to put it to use::
 
     class WsseFactory implements SecurityFactoryInterface
     {
-        public function create(ContainerBuilder $container, $id, $config, $userProvider, $defaultEntryPoint): array
+        public function create(ContainerBuilder $container, string $id, array $config, string $userProvider, ?string $defaultEntryPoint): array
         {
             $providerId = 'security.authentication.provider.wsse.'.$id;
             $container
@@ -612,7 +618,9 @@ set to any desirable value per firewall.
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xmlns:srv="http://symfony.com/schema/dic/services"
             xsi:schemaLocation="http://symfony.com/schema/dic/services
-                https://symfony.com/schema/dic/services/services-1.0.xsd">
+                https://symfony.com/schema/dic/services/services-1.0.xsd
+                http://symfony.com/schema/dic/security
+                https://symfony.com/schema/dic/security/security-1.0.xsd">
 
             <config>
                 <!-- ... -->

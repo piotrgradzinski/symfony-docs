@@ -37,6 +37,19 @@ will contain a credit card number.
             protected $cardNumber;
         }
 
+    .. code-block:: php-attributes
+
+        // src/Entity/Transaction.php
+        namespace App\Entity;
+
+        use Symfony\Component\Validator\Constraints as Assert;
+
+        class Transaction
+        {
+            #[Assert\Luhn(message: 'Please check your credit card number.')]
+            protected $cardNumber;
+        }
+
     .. code-block:: yaml
 
         # config/validator/validation.yaml
@@ -101,7 +114,12 @@ You can use the following parameters in this message:
 Parameter        Description
 ===============  ==============================================================
 ``{{ value }}``  The current (invalid) value
+``{{ label }}``  Corresponding form field label
 ===============  ==============================================================
+
+.. versionadded:: 5.2
+
+    The ``{{ label }}`` parameter was introduced in Symfony 5.2.
 
 .. include:: /reference/constraints/_payload-option.rst.inc
 

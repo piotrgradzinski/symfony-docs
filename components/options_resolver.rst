@@ -440,10 +440,6 @@ This way, the ``$value`` argument will receive the previously normalized
 value, otherwise you can prepend the new normalizer by passing ``true`` as
 third argument.
 
-.. versionadded:: 4.3
-
-    The ``addNormalizer()`` method was introduced in Symfony 4.3.
-
 Default Values that Depend on another Option
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -721,8 +717,64 @@ In same way, parent options can access to the nested options as normal arrays::
     The fact that an option is defined as nested means that you must pass
     an array of values to resolve it at runtime.
 
+Prototype Options
+~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 5.3
+
+    Prototype options were introduced in Symfony 5.3.
+
+There are situations where you will have to resolve and validate a set of
+options that may repeat many times within another option. Let's imagine a
+``connections`` option that will accept an array of database connections
+with ``host``, ``database``, ``user`` and ``password`` each.
+
+The best way to implement this is to define the ``connections`` option as prototype::
+
+    $resolver->setDefault('connections', function (OptionsResolver $connResolver) {
+        $connResolver
+            ->setPrototype(true)
+            ->setRequired(['host', 'database'])
+            ->setDefaults(['user' => 'root', 'password' => null]);
+    });
+
+According to the prototype definition in the example above, it is possible
+to have multiple connection arrays like the following::
+
+    $resolver->resolve([
+        'connections' => [
+            'default' => [
+                'host' => '127.0.0.1',
+                'database' => 'symfony',
+            ],
+            'test' => [
+                'host' => '127.0.0.1',
+                'database' => 'symfony_test',
+                'user' => 'test',
+                'password' => 'test',
+            ],
+            // ...
+        ],
+    ]);
+
+The array keys (``default``, ``test``, etc.) of this prototype option are
+validation-free and can be any arbitrary value that helps differentiate the
+connections.
+
+.. note::
+
+    A prototype option can only be defined inside a nested option and
+    during its resolution it will expect an array of arrays.
+
 Deprecating the Option
 ~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 5.1
+
+    The signature of the ``setDeprecated()`` method changed from
+    ``setDeprecated(string $option, ?string $message)`` to
+    ``setDeprecated(string $option, string $package, string $version, $message)``
+    in Symfony 5.1.
 
 Once an option is outdated or you decided not to maintain it anymore, you can
 deprecate it using the :method:`Symfony\\Component\\OptionsResolver\\OptionsResolver::setDeprecated`
@@ -730,12 +782,18 @@ method::
 
     $resolver
         ->setDefined(['hostname', 'host'])
-        // this outputs the following generic deprecation message:
-        // The option "hostname" is deprecated.
-        ->setDeprecated('hostname')
 
-        // you can also pass a custom deprecation message
-        ->setDeprecated('hostname', 'The option "hostname" is deprecated, use "host" instead.')
+        // this outputs the following generic deprecation message:
+        // Since acme/package 1.2: The option "hostname" is deprecated.
+        ->setDeprecated('hostname', 'acme/package', '1.2')
+
+        // you can also pass a custom deprecation message (%name% placeholder is available)
+        ->setDeprecated(
+            'hostname',
+            'acme/package',
+            '1.2',
+            'The option "hostname" is deprecated, use "host" instead.'
+        )
     ;
 
 .. note::
@@ -760,7 +818,7 @@ the option::
         ->setDefault('encryption', null)
         ->setDefault('port', null)
         ->setAllowedTypes('port', ['null', 'int'])
-        ->setDeprecated('port', function (Options $options, $value) {
+        ->setDeprecated('port', 'acme/package', '1.2', function (Options $options, $value) {
             if (null === $value) {
                 return 'Passing "null" to option "port" is deprecated, pass an integer instead.';
             }
@@ -781,6 +839,40 @@ the option::
 
 This closure receives as argument the value of the option after validating it
 and before normalizing it when the option is being resolved.
+
+Chaining Option Configurations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In many cases you may need to define multiple configurations for each option.
+For example, suppose the ``InvoiceMailer`` class has an ``host`` option that is required
+and a ``transport`` option which can be one of ``sendmail``, ``mail`` and ``smtp``.
+You can improve the readability of the code avoiding to duplicate option name for
+each configuration using the :method:`Symfony\\Component\\OptionsResolver\\OptionsResolver::define`
+method::
+
+    // ...
+    class InvoiceMailer
+    {
+        // ...
+        public function configureOptions(OptionsResolver $resolver)
+        {
+            // ...
+            $resolver->define('host')
+                ->required()
+                ->default('smtp.example.org')
+                ->allowedTypes('string')
+                ->info('The IP address or hostname');
+
+            $resolver->define('transport')
+                ->required()
+                ->default('transport')
+                ->allowedValues(['sendmail', 'mail', 'smtp']);
+        }
+    }
+
+.. versionadded:: 5.1
+
+    The ``define()`` and ``info()`` methods were introduced in Symfony 5.1.
 
 Performance Tweaks
 ~~~~~~~~~~~~~~~~~~

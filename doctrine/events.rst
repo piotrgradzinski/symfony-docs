@@ -166,7 +166,7 @@ with the ``doctrine.event_listener`` tag:
                         # this is the only required option for the lifecycle listener tag
                         event: 'postPersist'
 
-                        # listeners can define their priority in case multiple listeners are associated
+                        # listeners can define their priority in case multiple subscribers or listeners are associated
                         # to the same event (default priority = 0; higher numbers = listener is run earlier)
                         priority: 500
 
@@ -184,7 +184,7 @@ with the ``doctrine.event_listener`` tag:
 
                 <!--
                     * 'event' is the only required option that defines the lifecycle listener
-                    * 'priority': used when multiple listeners are associated to the same event
+                    * 'priority': used when multiple subscribers or listeners are associated to the same event
                     *             (default priority = 0; higher numbers = listener is run earlier)
                     * 'connection': restricts the listener to a specific Doctrine connection
                 -->
@@ -200,22 +200,28 @@ with the ``doctrine.event_listener`` tag:
     .. code-block:: php
 
         // config/services.php
+        namespace Symfony\Component\DependencyInjection\Loader\Configurator;
+
         use App\EventListener\SearchIndexer;
 
-        // listeners are applied by default to all Doctrine connections
-        $container->autowire(SearchIndexer::class)
-            ->addTag('doctrine.event_listener', [
-                // this is the only required option for the lifecycle listener tag
-                'event' => 'postPersist',
+        return static function (ContainerConfigurator $container) {
+            $services = $configurator->services();
 
-                // listeners can define their priority in case multiple listeners are associated
-                // to the same event (default priority = 0; higher numbers = listener is run earlier)
-                'priority' => 500,
+            // listeners are applied by default to all Doctrine connections
+            $services->set(SearchIndexer::class)
+                ->tag('doctrine.event_listener', [
+                    // this is the only required option for the lifecycle listener tag
+                    'event' => 'postPersist',
 
-                # you can also restrict listeners to a specific Doctrine connection
-                'connection' => 'default',
-            ])
-        ;
+                    // listeners can define their priority in case multiple subscribers or listeners are associated
+                    // to the same event (default priority = 0; higher numbers = listener is run earlier)
+                    'priority' => 500,
+
+                    # you can also restrict listeners to a specific Doctrine connection
+                    'connection' => 'default',
+                ])
+            ;
+        };
 
 .. tip::
 
@@ -316,33 +322,35 @@ with the ``doctrine.orm.entity_listener`` tag:
     .. code-block:: php
 
         // config/services.php
+        namespace Symfony\Component\DependencyInjection\Loader\Configurator;
+
         use App\Entity\User;
         use App\EventListener\UserChangedNotifier;
 
-        $container->autowire(UserChangedNotifier::class)
-            ->addTag('doctrine.orm.entity_listener', [
-                // These are the options required to define the entity listener:
-                'event' => 'postUpdate',
-                'entity' => User::class,
+        return static function (ContainerConfigurator $container) {
+            $services = $configurator->services();
 
-                // These are other options that you may define if needed:
+            $services->set(UserChangedNotifier::class)
+                ->tag('doctrine.orm.entity_listener', [
+                    // These are the options required to define the entity listener:
+                    'event' => 'postUpdate',
+                    'entity' => User::class,
 
-                // set the 'lazy' option to TRUE to only instantiate listeners when they are used
-                // 'lazy' => true,
+                    // These are other options that you may define if needed:
 
-                // set the 'entity_manager' option if the listener is not associated to the default manager
-                // 'entity_manager' => 'custom',
+                    // set the 'lazy' option to TRUE to only instantiate listeners when they are used
+                    // 'lazy' => true,
 
-                // by default, Symfony looks for a method called after the event (e.g. postUpdate())
-                // if it doesn't exist, it tries to execute the '__invoke()' method, but you can
-                // configure a custom method name with the 'method' option
-                // 'method' => 'checkUserChanges',
-            ])
-        ;
+                    // set the 'entity_manager' option if the listener is not associated to the default manager
+                    // 'entity_manager' => 'custom',
 
-.. versionadded:: 4.4
-
-    Support for invokable listeners (using the ``__invoke()`` method) was introduced in Symfony 4.4.
+                    // by default, Symfony looks for a method called after the event (e.g. postUpdate())
+                    // if it doesn't exist, it tries to execute the '__invoke()' method, but you can
+                    // configure a custom method name with the 'method' option
+                    // 'method' => 'checkUserChanges',
+                ])
+            ;
+        };
 
 Doctrine Lifecycle Subscribers
 ------------------------------
@@ -420,7 +428,14 @@ with the ``doctrine.event_subscriber`` tag:
 
             App\EventListener\DatabaseActivitySubscriber:
                 tags:
-                    - { name: 'doctrine.event_subscriber' }
+                    - name: 'doctrine.event_subscriber'
+
+                      # subscribers can define their priority in case multiple subscribers or listeners are associated
+                      # to the same event (default priority = 0; higher numbers = listener is run earlier)
+                      priority: 500
+
+                      # you can also restrict listeners to a specific Doctrine connection
+                      connection: 'default'
 
     .. code-block:: xml
 
@@ -431,8 +446,13 @@ with the ``doctrine.event_subscriber`` tag:
             <services>
                 <!-- ... -->
 
+                <!--
+                    * 'priority': used when multiple subscribers or listeners are associated to the same event
+                    *             (default priority = 0; higher numbers = listener is run earlier)
+                    * 'connection': restricts the listener to a specific Doctrine connection
+                -->
                 <service id="App\EventListener\DatabaseActivitySubscriber">
-                    <tag name="doctrine.event_subscriber"/>
+                    <tag name="doctrine.event_subscriber" priority="500" connection="default"/>
                 </service>
             </services>
         </container>
@@ -440,11 +460,24 @@ with the ``doctrine.event_subscriber`` tag:
     .. code-block:: php
 
         // config/services.php
+        namespace Symfony\Component\DependencyInjection\Loader\Configurator;
+
         use App\EventListener\DatabaseActivitySubscriber;
 
-        $container->autowire(DatabaseActivitySubscriber::class)
-            ->addTag('doctrine.event_subscriber')
-        ;
+        return static function (ContainerConfigurator $container) {
+            $services = $configurator->services();
+
+            $services->set(DatabaseActivitySubscriber::class)
+                ->tag('doctrine.event_subscriber'[
+                    // subscribers can define their priority in case multiple subscribers or listeners are associated
+                    // to the same event (default priority = 0; higher numbers = listener is run earlier)
+                    'priority' => 500,
+
+                    // you can also restrict listeners to a specific Doctrine connection
+                    'connection' => 'default',
+                ])
+            ;
+        };
 
 If you need to associate the subscriber with a specific Doctrine connection, you
 can do it in the service configuration:
@@ -479,11 +512,21 @@ can do it in the service configuration:
     .. code-block:: php
 
         // config/services.php
+        namespace Symfony\Component\DependencyInjection\Loader\Configurator;
+
         use App\EventListener\DatabaseActivitySubscriber;
 
-        $container->autowire(DatabaseActivitySubscriber::class)
-            ->addTag('doctrine.event_subscriber', ['connection' => 'default'])
-        ;
+        return static function (ContainerConfigurator $container) {
+            $services = $configurator->services();
+
+            $services->set(DatabaseActivitySubscriber::class)
+                ->tag('doctrine.event_subscriber', ['connection' => 'default'])
+            ;
+        };
+
+.. versionadded:: 5.3
+
+    Subscriber priority was introduced in Symfony 5.3.
 
 .. tip::
 

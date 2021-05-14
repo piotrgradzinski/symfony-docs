@@ -71,8 +71,8 @@ readable. These are the main advantages and disadvantages of each format:
   and validation for it. :doc:`Learn the YAML syntax </components/yaml/yaml_format>`;
 * **XML**:autocompleted/validated by most IDEs and is parsed natively by PHP,
   but sometimes it generates configuration considered too verbose. `Learn the XML syntax`_;
-* **PHP**: very powerful and it allows you to create dynamic configuration, but the
-  resulting configuration is less readable than the other formats.
+* **PHP**: very powerful and it allows you to create dynamic configuration with
+  arrays or a :ref:`ConfigBuilder <config-config-builder>`.
 
 Importing Configuration Files
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -143,10 +143,6 @@ configuration files, even if they use a different format:
         };
 
         // ...
-
-.. versionadded:: 4.4
-
-    The ``not_found`` option value for ``ignore_errors`` was introduced in Symfony 4.4.
 
 .. _config-parameter-intro:
 .. _config-parameters-yml:
@@ -616,10 +612,6 @@ Define a default value in case the environment variable is not set:
     DB_USER=
     DB_PASS=${DB_USER:-root}pass # results in DB_PASS=rootpass
 
-.. versionadded:: 4.4
-
-    The support for default values has been introduced in Symfony 4.4.
-
 Embed commands via ``$()`` (not supported on Windows):
 
 .. code-block:: bash
@@ -739,10 +731,6 @@ their values by running:
 
     # run this command to show all the details for a specific env var:
     $ php bin/console debug:container --env-var=FOO
-
-.. versionadded:: 4.3
-
-    The option to debug environment variables was introduced in Symfony 4.3.
 
 .. _configuration-accessing-parameters:
 
@@ -888,7 +876,7 @@ whenever a service/controller defines a ``$projectDir`` argument, use this:
                     // pass this value to any $projectDir argument for any service
                     // that's created in this file (including controller arguments)
                     ->bind('$projectDir', '%kernel.project_dir%');
-            
+
             // ...
         };
 
@@ -925,6 +913,51 @@ parameters at once by type-hinting any of its constructor arguments with the
             // ...
         }
     }
+
+.. _config-config-builder:
+
+Using PHP ConfigBuilders
+------------------------
+
+.. versionadded:: 5.3
+
+    The "ConfigBuilders" feature was introduced in Symfony 5.3 as an
+    :doc:`experimental feature </contributing/code/experimental>`.
+
+Writing PHP config is sometimes difficult because you end up with large nested
+arrays and you have no autocompletion help from your favorite IDE. A way to
+address this is to use "ConfigBuilders". They are objects that will help you
+build these arrays.
+
+Symfony generates the ConfigBuilder classes automatically in the
+:ref:`kernel build directory <configuration-kernel-build-directory>` for all the
+bundles installed in your application. By convention they all live in the
+namespace ``Symfony\Config``::
+
+    // config/packages/security.php
+    use Symfony\Config\SecurityConfig;
+
+    return static function (SecurityConfig $security) {
+        $security->firewall('main')
+            ->pattern('^/*')
+            ->lazy(true)
+            ->anonymous();
+
+        $security
+            ->roleHierarchy('ROLE_ADMIN', ['ROLE_USER'])
+            ->roleHierarchy('ROLE_SUPER_ADMIN', ['ROLE_ADMIN', 'ROLE_ALLOWED_TO_SWITCH'])
+            ->accessControl()
+                ->path('^/user')
+                ->role('ROLE_USER');
+
+        $security->accessControl(['path' => '^/admin', 'roles' => 'ROLE_ADMIN']);
+    };
+
+.. note::
+
+    Only root classes in the namespace ``Symfony\Config`` are ConfigBuilders.
+    Nested configs (e.g. ``\Symfony\Config\Framework\CacheConfig``) are regular
+    PHP objects which aren't autowired when using them as an argument type.
 
 Keep Going!
 -----------

@@ -223,12 +223,13 @@ important parts of your application.
 
 .. _best-practice-controller-annotations:
 
-Use Annotations to Configure Routing, Caching and Security
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Use Attributes or Annotations to Configure Routing, Caching and Security
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Using annotations for routing, caching and security simplifies configuration.
-You don't need to browse several files created with different formats (YAML, XML,
-PHP): all the configuration is just where you need it and it only uses one format.
+Using attributes or annotations for routing, caching and security simplifies
+configuration. You don't need to browse several files created with different
+formats (YAML, XML, PHP): all the configuration is just where you need it and
+it only uses one format.
 
 Don't Use Annotations to Configure the Controller Template
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -367,7 +368,7 @@ Use the ``auto`` Password Hasher
 
 The :ref:`auto password hasher <reference-security-encoder-auto>` automatically
 selects the best possible encoder/hasher depending on your PHP installation.
-Currently, it tries to use ``sodium`` by default and falls back to ``bcrypt``.
+Starting from Symfony 5.3, the default auto hasher is ``bcrypt``.
 
 Use Voters to Implement Fine-grained Security Restrictions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

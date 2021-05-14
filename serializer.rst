@@ -41,6 +41,19 @@ you need it or it can be used in a controller::
         }
     }
 
+Or you can use the ``serialize`` Twig filter in a template:
+
+.. code-block:: twig
+
+    {{ object|serialize(format = 'json') }}
+
+See the :doc:`twig reference </reference/twig_reference>` for
+more information.
+
+.. versionadded:: 5.3
+
+    A ``serialize`` filter was introduced in Symfony 5.3 that uses the Serializer component.
+
 Adding Normalizers and Encoders
 -------------------------------
 
@@ -67,24 +80,15 @@ As well as the following normalizers:
   for :phpclass:`DateInterval` objects
 * :class:`Symfony\\Component\\Serializer\\Normalizer\\DataUriNormalizer` to
   transform :phpclass:`SplFileInfo` objects in `Data URIs`_
+* :class:`Symfony\\Component\\Serializer\\Normalizer\\FormErrorNormalizer` for
+  objects implementing the :class:`Symfony\\Component\\Form\\FormInterface` to
+  normalize form errors.
 * :class:`Symfony\\Component\\Serializer\\Normalizer\\JsonSerializableNormalizer`
   to deal with objects implementing the :phpclass:`JsonSerializable` interface
 * :class:`Symfony\\Component\\Serializer\\Normalizer\\ArrayDenormalizer` to
-  denormalize arrays of objects using a format like `MyObject[]` (note the `[]` suffix)
+  denormalize arrays of objects using a notation like ``MyObject[]`` (note the ``[]`` suffix)
 * :class:`Symfony\\Component\\Serializer\\Normalizer\\ConstraintViolationListNormalizer` for objects implementing the :class:`Symfony\\Component\\Validator\\ConstraintViolationListInterface` interface
 * :class:`Symfony\\Component\\Serializer\\Normalizer\\ProblemNormalizer` for :class:`Symfony\\Component\\ErrorHandler\\Exception\\FlattenException` objects
-
-.. versionadded:: 4.1
-
-    The ``ConstraintViolationListNormalizer`` was introduced in Symfony 4.1.
-
-.. versionadded:: 4.3
-
-    The ``DateTimeZoneNormalizer`` was introduced in Symfony 4.3.
-
-.. versionadded:: 4.4
-
-    The ``ProblemNormalizer`` was introduced in Symfony 4.4.
 
 Custom normalizers and/or encoders can also be loaded by tagging them as
 :ref:`serializer.normalizer <reference-dic-tags-serializer-normalizer>` and
@@ -255,12 +259,11 @@ value:
     .. code-block:: php
 
         // config/packages/framework.php
-        $container->loadFromExtension('framework', [
-            // ...
-            'serializer' => [
-                'name_converter' => 'serializer.name_converter.camel_case_to_snake_case',
-            ],
-        ]);
+        use Symfony\Config\FrameworkConfig;
+
+        return static function (FrameworkConfig $framework) {
+            $framework->serializer()->nameConverter('serializer.name_converter.camel_case_to_snake_case');
+        };
 
 Going Further with the Serializer
 ---------------------------------

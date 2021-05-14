@@ -112,7 +112,9 @@ Edit the ``security.yaml`` file in order to declare the ``/logout`` path:
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xmlns:srv="http://symfony.com/schema/dic/services"
             xsi:schemaLocation="http://symfony.com/schema/dic/services
-                https://symfony.com/schema/dic/services/services-1.0.xsd">
+                https://symfony.com/schema/dic/services/services-1.0.xsd
+                http://symfony.com/schema/dic/security
+                https://symfony.com/schema/dic/security/security-1.0.xsd">
 
             <config>
                 <!-- ... -->
@@ -325,7 +327,9 @@ a traditional HTML form that submits to ``/login``:
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xmlns:srv="http://symfony.com/schema/dic/services"
             xsi:schemaLocation="http://symfony.com/schema/dic/services
-                https://symfony.com/schema/dic/services/services-1.0.xsd">
+                https://symfony.com/schema/dic/services/services-1.0.xsd
+                http://symfony.com/schema/dic/security
+                https://symfony.com/schema/dic/security/security-1.0.xsd">
 
             <config>
                 <!-- ... -->
@@ -474,7 +478,6 @@ whenever the user browses a page::
     namespace App\EventSubscriber;
 
     use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-    use Symfony\Component\HttpFoundation\Session\SessionInterface;
     use Symfony\Component\HttpKernel\Event\RequestEvent;
     use Symfony\Component\HttpKernel\KernelEvents;
     use Symfony\Component\Security\Http\Util\TargetPathTrait;
@@ -483,25 +486,18 @@ whenever the user browses a page::
     {
         use TargetPathTrait;
 
-        private $session;
-
-        public function __construct(SessionInterface $session)
-        {
-            $this->session = $session;
-        }
-
         public function onKernelRequest(RequestEvent $event): void
         {
             $request = $event->getRequest();
             if (
-                !$event->isMasterRequest()
+                !$event->isMainRequest()
                 || $request->isXmlHttpRequest()
                 || 'app_login' === $request->attributes->get('_route')
             ) {
                 return;
             }
 
-            $this->saveTargetPath($this->session, 'main', $request->getUri());
+            $this->saveTargetPath($request->getSession(), 'main', $request->getUri());
         }
 
         public static function getSubscribedEvents(): array

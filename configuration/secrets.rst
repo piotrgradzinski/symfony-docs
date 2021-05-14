@@ -4,10 +4,6 @@
 How to Keep Sensitive Information Secret
 ========================================
 
-.. versionadded:: 4.4
-
-    The Secrets management was introduced in Symfony 4.4.
-
 :ref:`Environment variables <config-env-vars>` are the best way to store configuration
 that depends on where the application is run - for example, some API key that
 might be set to one value while developing locally and another value on production.
@@ -142,11 +138,14 @@ If you stored a ``DATABASE_PASSWORD`` secret, you can reference it by:
     .. code-block:: php
 
         // config/packages/doctrine.php
-        $container->loadFromExtension('doctrine', [
-            'dbal' => [
-                'password' => '%env(DATABASE_PASSWORD)%',
-            ]
-        ]);
+        use Symfony\Config\DoctrineConfig;
+
+        return static function (DoctrineConfig $doctrine) {
+            $doctrine->dbal()
+                ->connection('default')
+                    ->password('%env(DATABASE_PASSWORD)%')
+            ;
+        };
 
 The actual value will be resolved at runtime: container compilation and cache
 warmup don't need the **decryption key**.
@@ -309,13 +308,15 @@ The secrets system is enabled by default and some of its behavior can be configu
     .. code-block:: php
 
         // config/packages/framework.php
-        $container->loadFromExtension('framework', [
-            'secrets' => [
-                // 'vault_directory' => '%kernel.project_dir%/config/secrets/%kernel.environment%',
-                // 'local_dotenv_file' => '%kernel.project_dir%/.env.%kernel.environment%.local',
-                // 'decryption_env_var' => 'base64:default::SYMFONY_DECRYPTION_SECRET',
-            ],
-        ]);
+        use Symfony\Config\FrameworkConfig;
+
+        return static function (FrameworkConfig $framework) {
+            $framework->secrets()
+                // ->vaultDirectory('%kernel.project_dir%/config/secrets/%kernel.environment%')
+                // ->localDotenvFile('%kernel.project_dir%/.env.%kernel.environment%.local')
+                // ->decryptionEnvVar('base64:default::SYMFONY_DECRYPTION_SECRET')
+            ;
+        };
 
 
 .. _`libsodium`: https://pecl.php.net/package/libsodium

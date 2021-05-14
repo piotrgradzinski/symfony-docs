@@ -405,12 +405,14 @@ rest of files):
     .. code-block:: php
 
         // config/packages/twig.php
-        $container->loadFromExtension('twig', [
-            'form_themes' => [
+        use Symfony\Config\TwigConfig;
+
+        return static function (TwigConfig $twig) {
+            $twig->formThemes([
                 'form/custom_types.html.twig',
                 '...',
-            ],
-        ]);
+            ]);
+        };
 
 The last step is to create the actual Twig template that will render the type.
 The template contents depend on which HTML, CSS and JavaScript frameworks and
@@ -429,12 +431,6 @@ libraries are used in your application:
             </div>
         {% endfor %}
     {% endblock %}
-
-.. note::
-
-    Symfony 4.2 deprecated calling ``FormRenderer::searchAndRenderBlock`` for
-    fields that have already been rendered. That's why the previous example
-    includes the ``... if not child.rendered`` statement.
 
 The first part of the Twig block name (e.g. ``postal_address``) comes from the
 class name (``PostalAddressType`` -> ``postal_address``). This can be controlled

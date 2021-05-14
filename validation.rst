@@ -68,6 +68,20 @@ following:
             private $name;
         }
 
+    .. code-block:: php-attributes
+
+        // src/Entity/Author.php
+        namespace App\Entity;
+
+        // ...
+        use Symfony\Component\Validator\Constraints as Assert;
+
+        class Author
+        {
+            #[Assert\NotBlank]
+            private $name;
+        }
+
     .. code-block:: yaml
 
         # config/validator/validation.yaml
@@ -242,11 +256,13 @@ file:
     .. code-block:: php
 
         // config/packages/framework.php
-        $container->loadFromExtension('framework', [
-            'validation' => [
-                'enabled' => true,
-            ],
-        ]);
+        use Symfony\Config\FrameworkConfig;
+
+        return static function (FrameworkConfig $framework) {
+            $framework->validation()
+                ->enabled(true)
+            ;
+        };
 
 Besides, if you plan to use annotations to configure validation, replace the
 previous configuration by the following:
@@ -278,11 +294,13 @@ previous configuration by the following:
     .. code-block:: php
 
         // config/packages/framework.php
-        $container->loadFromExtension('framework', [
-            'validation' => [
-                'enable_annotations' => true,
-            ],
-        ]);
+        use Symfony\Config\FrameworkConfig;
+
+        return static function (FrameworkConfig $framework) {
+            $framework->validation()
+                ->enableAnnotations(true)
+            ;
+        };
 
 .. tip::
 
@@ -351,6 +369,25 @@ literature genre mostly associated with the author, which can be set to either
              *     message = "Choose a valid genre."
              * )
              */
+            private $genre;
+
+            // ...
+        }
+
+    .. code-block:: php-attributes
+
+        // src/Entity/Author.php
+        namespace App\Entity;
+
+        // ...
+        use Symfony\Component\Validator\Constraints as Assert;
+
+        class Author
+        {
+            #[Assert\Choice(
+                choices: ['fiction', 'non-fiction'],
+                message: 'Choose a valid genre.',
+            )]
             private $genre;
 
             // ...
@@ -437,6 +474,22 @@ options can be specified in this way.
             /**
              * @Assert\Choice({"fiction", "non-fiction"})
              */
+            private $genre;
+
+            // ...
+        }
+
+    .. code-block:: php-attributes
+
+        // src/Entity/Author.php
+        namespace App\Entity;
+
+        // ...
+        use Symfony\Component\Validator\Constraints as Assert;
+
+        class Author
+        {
+            #[Assert\Choice(['fiction', 'non-fiction'])]
             private $genre;
 
             // ...
@@ -564,6 +617,20 @@ class to have at least 3 characters.
             private $firstName;
         }
 
+    .. code-block:: php-attributes
+
+        // src/Entity/Author.php
+
+        // ...
+        use Symfony\Component\Validator\Constraints as Assert;
+
+        class Author
+        {
+            #[Assert\NotBlank]
+            #[Assert\Length(min: 3)]
+            private $firstName;
+        }
+
     .. code-block:: yaml
 
         # config/validator/validation.yaml
@@ -660,6 +727,23 @@ this method must return ``true``:
             }
         }
 
+    .. code-block:: php-attributes
+
+        // src/Entity/Author.php
+        namespace App\Entity;
+
+        // ...
+        use Symfony\Component\Validator\Constraints as Assert;
+
+        class Author
+        {
+            #[Assert\IsTrue(message: 'The password cannot match your first name')]
+            public function isPasswordSafe()
+            {
+                // ... return true or false
+            }
+        }
+
     .. code-block:: yaml
 
         # config/validator/validation.yaml
@@ -729,6 +813,46 @@ the :doc:`Callback </reference/constraints/Callback>` constraint is a generic
 constraint that's applied to the class itself. When that class is validated,
 methods specified by that constraint are simply executed so that each can
 provide more custom validation.
+
+Debugging the Constraints
+-------------------------
+
+.. versionadded:: 5.2
+
+    The ``debug:validator`` command was introduced in Symfony 5.2.
+
+Use the ``debug:validator`` command to list the validation constraints of a
+given class:
+
+.. code-block:: terminal
+
+    $ php bin/console debug:validator 'App\Entity\SomeClass'
+
+        App\Entity\SomeClass
+        -----------------------------------------------------
+
+        +---------------+--------------------------------------------------+---------+------------------------------------------------------------+
+        | Property      | Name                                             | Groups  | Options                                                    |
+        +---------------+--------------------------------------------------+---------+------------------------------------------------------------+
+        | firstArgument | Symfony\Component\Validator\Constraints\NotBlank | Default | [                                                          |
+        |               |                                                  |         |   "message" => "This value should not be blank.",          |
+        |               |                                                  |         |   "allowNull" => false,                                    |
+        |               |                                                  |         |   "normalizer" => null,                                    |
+        |               |                                                  |         |   "payload" => null                                        |
+        |               |                                                  |         | ]                                                          |
+        | firstArgument | Symfony\Component\Validator\Constraints\Email    | Default | [                                                          |
+        |               |                                                  |         |   "message" => "This value is not a valid email address.", |
+        |               |                                                  |         |   "mode" => null,                                          |
+        |               |                                                  |         |   "normalizer" => null,                                    |
+        |               |                                                  |         |   "payload" => null                                        |
+        |               |                                                  |         | ]                                                          |
+        +---------------+--------------------------------------------------+---------+------------------------------------------------------------+
+
+You can also validate all the classes stored in a given directory:
+
+.. code-block:: terminal
+
+    $ php bin/console debug:validator src/Entity
 
 Final Thoughts
 --------------

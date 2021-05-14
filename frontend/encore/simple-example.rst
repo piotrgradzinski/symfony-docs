@@ -4,8 +4,8 @@ Encore: Setting up your Project
 After :doc:`installing Encore </frontend/encore/installation>`, your app already has one
 CSS and one JS file, organized into an ``assets/`` directory:
 
-* ``assets/js/app.js``
-* ``assets/css/app.css``
+* ``assets/app.js``
+* ``assets/styles/app.css``
 
 With Encore, think of your ``app.js`` file like a standalone JavaScript
 application: it will *require* all of the dependencies it needs (e.g. jQuery or React),
@@ -14,12 +14,10 @@ application: it will *require* all of the dependencies it needs (e.g. jQuery or 
 
 .. code-block:: javascript
 
-    // assets/js/app.js
+    // assets/app.js
     // ...
 
-    import '../css/app.css';
-
-    // var $ = require('jquery');
+    import './styles/app.css';
 
 Encore's job (via Webpack) is simple: to read and follow *all* of the ``require()``
 statements and create one final ``app.js`` (and ``app.css``) that contains *everything*
@@ -35,7 +33,7 @@ of your project. It already holds the basic config you need:
 .. code-block:: javascript
 
     // webpack.config.js
-    var Encore = require('@symfony/webpack-encore');
+    const Encore = require('@symfony/webpack-encore');
 
     Encore
         // directory where compiled assets will be stored
@@ -43,14 +41,14 @@ of your project. It already holds the basic config you need:
         // public path used by the web server to access the output path
         .setPublicPath('/build')
 
-        .addEntry('app', './assets/js/app.js')
+        .addEntry('app', './assets/app.js')
 
         // ...
     ;
 
     // ...
 
-The *key* part is ``addEntry()``: this tells Encore to load the ``assets/js/app.js``
+The *key* part is ``addEntry()``: this tells Encore to load the ``assets/app.js``
 file and follow *all* of the ``require()`` statements. It will then package everything
 together and - thanks to the first ``app`` argument - output final ``app.js`` and
 ``app.css`` files into the ``public/build`` directory.
@@ -121,7 +119,7 @@ can do most of the work for you:
 .. _encore-entrypointsjson-simple-description:
 
 That's it! When you refresh your page, all of the JavaScript from
-``assets/js/app.js`` - as well as any other JavaScript files it included - will
+``assets/app.js`` - as well as any other JavaScript files it included - will
 be executed. All the CSS files that were required will also be displayed.
 
 The ``encore_entry_link_tags()`` and ``encore_entry_script_tags()`` functions
@@ -130,6 +128,8 @@ filename(s) to render. This file is *especially* useful because you can
 :doc:`enable versioning </frontend/encore/versioning>` or
 :doc:`point assets to a CDN </frontend/encore/cdn>` without making *any* changes to your
 template: the paths in ``entrypoints.json`` will always be the final, correct paths.
+And if you use :doc:`splitEntryChunks() </frontend/encore/split-chunks>` (where Webpack splits the output into even
+more files), all the necessary ``script`` and ``link`` tags will render automatically.
 
 If you're *not* using Symfony, you can ignore the ``entrypoints.json`` file and
 point to the final, built file directly. ``entrypoints.json`` is only required for
@@ -147,13 +147,13 @@ some optional features.
 Requiring JavaScript Modules
 ----------------------------
 
-Webpack is a module bundler, which means that you can ``require`` other JavaScript
+Webpack is a module bundler, which means that you can ``import`` other JavaScript
 files. First, create a file that exports a function:
 
 .. code-block:: javascript
 
-    // assets/js/greet.js
-    module.exports = function(name) {
+    // assets/greet.js
+    export default function(name) {
         return `Yo yo ${name} - welcome to Encore!`;
     };
 
@@ -163,19 +163,19 @@ We'll use jQuery to print this message on the page. Install it via:
 
     $ yarn add jquery --dev
 
-Great! Use ``require()`` to import ``jquery`` and ``greet.js``:
+Great! Use ``import`` to import ``jquery`` and ``greet.js``:
 
 .. code-block:: diff
 
-      // assets/js/app.js
+      // assets/app.js
       // ...
 
     + // loads the jquery package from node_modules
-    + var $ = require('jquery');
+    + import jquery from 'jquery';
 
     + // import the function from greet.js (the .js extension is optional)
     + // ./ (or ../) means to look for a local file
-    + var greet = require('./greet');
+    + import greet from './greet';
 
     + $(document).ready(function() {
     +     $('body').prepend('<h1>'+greet('jill')+'</h1>');
@@ -184,37 +184,6 @@ Great! Use ``require()`` to import ``jquery`` and ``greet.js``:
 That's it! If you previously ran ``encore dev --watch``, your final, built files
 have already been updated: jQuery and ``greet.js`` have been automatically
 added to the output file (``app.js``). Refresh to see the message!
-
-The import and export Statements
---------------------------------
-
-Instead of using ``require()`` and ``module.exports`` like shown above, JavaScript
-provides an alternate syntax based on the `ECMAScript 6 modules`_ that includes
-the ability to use dynamic imports.
-
-To export values using the alternate syntax, use ``export``:
-
-.. code-block:: diff
-
-      // assets/js/greet.js
-    - module.exports = function(name) {
-    + export default function(name) {
-          return `Yo yo ${name} - welcome to Encore!`;
-      };
-
-To import values, use ``import``:
-
-.. code-block:: diff
-
-      // assets/js/app.js
-    - require('../css/app.css');
-    + import '../css/app.css';
-
-    - var $ = require('jquery');
-    + import $ from 'jquery';
-
-    - var greet = require('./greet');
-    + import greet from './greet';
 
 .. _multiple-javascript-entries:
 
@@ -228,12 +197,12 @@ etc.). To handle this, create a new "entry" JavaScript file for each page:
 
 .. code-block:: javascript
 
-    // assets/js/checkout.js
+    // assets/checkout.js
     // custom code for your checkout page
 
 .. code-block:: javascript
 
-    // assets/js/account.js
+    // assets/account.js
     // custom code for your account page
 
 Next, use ``addEntry()`` to tell Webpack to read these two new files when it builds:
@@ -243,9 +212,9 @@ Next, use ``addEntry()`` to tell Webpack to read these two new files when it bui
       // webpack.config.js
       Encore
           // ...
-          .addEntry('app', './assets/js/app.js')
-    +     .addEntry('checkout', './assets/js/checkout.js')
-    +     .addEntry('account', './assets/js/account.js')
+          .addEntry('app', './assets/app.js')
+    +     .addEntry('checkout', './assets/checkout.js')
+    +     .addEntry('account', './assets/account.js')
           // ...
 
 And because you just changed the ``webpack.config.js`` file, make sure to stop
@@ -294,9 +263,9 @@ file to ``app.scss`` and update the ``import`` statement:
 
 .. code-block:: diff
 
-      // assets/js/app.js
-    - import '../css/app.css';
-    + import '../css/app.scss';
+      // assets/app.js
+    - import './styles/app.css';
+    + import './styles/app.scss';
 
 Then, tell Encore to enable the Sass pre-processor:
 
@@ -345,7 +314,7 @@ If you want to only compile a CSS file, that's possible via ``addStyleEntry()``:
     Encore
         // ...
 
-        .addStyleEntry('some_page', './assets/css/some_page.css')
+        .addStyleEntry('some_page', './assets/styles/some_page.css')
     ;
 
 This will output a new ``some_page.css``.
@@ -357,5 +326,4 @@ Encore supports many more features! For a full list of what you can do, see
 `Encore's index.js file`_. Or, go back to :ref:`list of Encore articles <encore-toc>`.
 
 .. _`Encore's index.js file`: https://github.com/symfony/webpack-encore/blob/master/index.js
-.. _`ECMAScript 6 modules`: https://hacks.mozilla.org/2015/08/es6-in-depth-modules/
 .. _`WebpackEncoreBundle Configuration`: https://github.com/symfony/webpack-encore-bundle#configuration

@@ -12,12 +12,12 @@ To do that, modify the config after fetching it from Encore:
 
     // webpack.config.js
 
-    var Encore = require('@symfony/webpack-encore');
+    const Encore = require('@symfony/webpack-encore');
 
     // ... all Encore config here
 
     // fetch the config, then modify it!
-    var config = Encore.getWebpackConfig();
+    const config = Encore.getWebpackConfig();
 
     // add an extension
     config.resolve.extensions.push('json');
@@ -65,8 +65,8 @@ state of the current configuration to build a new one:
     Encore
         .setOutputPath('public/build/first_build/')
         .setPublicPath('/build/first_build')
-        .addEntry('app', './assets/js/app.js')
-        .addStyleEntry('global', './assets/css/global.scss')
+        .addEntry('app', './assets/app.js')
+        .addStyleEntry('global', './assets/styles/global.scss')
         .enableSassLoader()
         .autoProvidejQuery()
         .enableSourceMaps(!Encore.isProduction())
@@ -85,8 +85,8 @@ state of the current configuration to build a new one:
     Encore
         .setOutputPath('public/build/second_build/')
         .setPublicPath('/build/second_build')
-        .addEntry('mobile', './assets/js/mobile.js')
-        .addStyleEntry('mobile', './assets/css/mobile.less')
+        .addEntry('mobile', './assets/mobile.js')
+        .addStyleEntry('mobile', './assets/styles/mobile.less')
         .enableLessLoader()
         .enableSourceMaps(!Encore.isProduction())
     ;
@@ -208,8 +208,8 @@ The following code is equivalent:
 The following loaders are configurable with ``configureLoaderRule()``:
   - ``javascript`` (alias ``js``)
   - ``css``
-  - ``images``
-  - ``fonts``
+  - ``images`` (but use ``configureImageRule()`` instead)
+  - ``fonts`` (but use ``configureFontRule()`` instead)
   - ``sass`` (alias ``scss``)
   - ``less``
   - ``stylus``

@@ -345,16 +345,16 @@ can set this option to generate forms compatible with the Bootstrap 4 CSS framew
     .. code-block:: php
 
         // config/packages/twig.php
-        $container->loadFromExtension('twig', [
-            'form_themes' => [
-                'bootstrap_4_layout.html.twig',
-            ],
+        use Symfony\Config\TwigConfig;
+
+        return static function (TwigConfig $twig) {
+            $twig->formThemes(['bootstrap_4_layout.html.twig']);
 
             // ...
-        ]);
+        };
 
 The :ref:`built-in Symfony form themes <symfony-builtin-forms>` include
-Bootstrap 3 and 4 and Foundation 5. You can also
+Bootstrap 3 and 4 as well as Foundation 5 and 6. You can also
 :ref:`create your own Symfony form theme <create-your-own-form-theme>`.
 
 In addition to form themes, Symfony allows you to
@@ -507,6 +507,23 @@ object.
             protected $dueDate;
         }
 
+    .. code-block:: php-attributes
+
+        // src/Entity/Task.php
+        namespace App\Entity;
+
+        use Symfony\Component\Validator\Constraints as Assert;
+
+        class Task
+        {
+            #[Assert\NotBlank]
+            public $task;
+
+            #[Assert\NotBlank]
+            #[Assert\Type(\DateTime::class)]
+            protected $dueDate;
+        }
+
     .. code-block:: yaml
 
         # config/validator/validation.yaml
@@ -569,6 +586,52 @@ corresponding errors printed out with the form.
 To see the second approach - adding constraints to the form - and to
 learn more about the validation constraints, please refer to the
 :doc:`Symfony validation documentation </validation>`.
+
+Form Validation Messages
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 5.2
+
+    The ``legacy_error_messages`` option was introduced in Symfony 5.2
+
+The form types have default error messages that are more clear and
+user-friendly than the ones provided by the validation constraints. To enable
+these new messages set the ``legacy_error_messages`` option to ``false``:
+
+.. configuration-block::
+
+    .. code-block:: yaml
+
+        # config/packages/framework.yaml
+        framework:
+            form:
+                legacy_error_messages: false
+
+    .. code-block:: xml
+
+        <!-- config/packages/framework.xml -->
+        <?xml version="1.0" encoding="UTF-8" ?>
+        <container xmlns="http://symfony.com/schema/dic/services"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xmlns:framework="http://symfony.com/schema/dic/symfony"
+            xsi:schemaLocation="http://symfony.com/schema/dic/services
+                https://symfony.com/schema/dic/services/services-1.0.xsd
+                http://symfony.com/schema/dic/symfony
+                https://symfony.com/schema/dic/symfony/symfony-1.0.xsd">
+
+            <framework:config>
+                <framework:form legacy-error-messages="false"/>
+            </framework:config>
+        </container>
+
+    .. code-block:: php
+
+        // config/packages/framework.php
+        use Symfony\Config\FrameworkConfig;
+
+        return static function (FrameworkConfig $framework) {
+            $framework->form()->legacyErrorMessages(false);
+        };
 
 Other Common Form Features
 --------------------------
@@ -689,7 +752,7 @@ Set the ``label`` option on fields to define their labels explicitly::
 
     ->add('dueDate', DateType::class, [
         // set it to FALSE to not display the label for this field
-        'label'  => 'To Be Completed Before',
+        'label' => 'To Be Completed Before',
     ])
 
 .. tip::
@@ -901,10 +964,11 @@ option in the options field array::
 
     ->add('task', null, ['attr' => ['maxlength' => 4]])
 
-.. versionadded:: 4.3
+.. seealso::
 
-    Starting from Symfony 4.3, :doc:`Doctrine </doctrine>` metadata is introspected
-    to add :ref:`automatic validation constraints <automatic_object_validation>`.
+    Besides guessing the form type, Symfony also guesses :ref:`validation constraints <validating-forms>`
+    if you're using a Doctrine entity. Read :ref:`automatic_object_validation`
+    guide for more information.
 
 Unmapped Fields
 ~~~~~~~~~~~~~~~

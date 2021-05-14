@@ -43,6 +43,22 @@ on an object that will contain an ISBN.
             protected $isbn;
         }
 
+    .. code-block:: php-attributes
+
+        // src/Entity/Book.php
+        namespace App\Entity;
+
+        use Symfony\Component\Validator\Constraints as Assert;
+
+        class Book
+        {
+            #[Assert\Isbn(
+                type: Assert\Isbn::ISBN_10,
+                message: 'This value is not valid.',
+            )]
+            protected $isbn;
+        }
+
     .. code-block:: yaml
 
         # config/validator/validation.yaml
@@ -84,7 +100,7 @@ on an object that will contain an ISBN.
             public static function loadValidatorMetadata(ClassMetadata $metadata)
             {
                 $metadata->addPropertyConstraint('isbn', new Assert\Isbn([
-                    'type' => 'isbn10',
+                    'type' => Assert\Isbn::ISBN_10,
                     'message' => 'This value is not valid.',
                 ]));
             }
@@ -109,7 +125,12 @@ You can use the following parameters in this message:
 Parameter        Description
 ===============  ==============================================================
 ``{{ value }}``  The current (invalid) value
+``{{ label }}``  Corresponding form field label
 ===============  ==============================================================
+
+.. versionadded:: 5.2
+
+    The ``{{ label }}`` parameter was introduced in Symfony 5.2.
 
 .. include:: /reference/constraints/_groups-option.rst.inc
 
@@ -127,7 +148,12 @@ You can use the following parameters in this message:
 Parameter        Description
 ===============  ==============================================================
 ``{{ value }}``  The current (invalid) value
+``{{ label }}``  Corresponding form field label
 ===============  ==============================================================
+
+.. versionadded:: 5.2
+
+    The ``{{ label }}`` parameter was introduced in Symfony 5.2.
 
 ``isbn13Message``
 ~~~~~~~~~~~~~~~~~
@@ -143,7 +169,12 @@ You can use the following parameters in this message:
 Parameter        Description
 ===============  ==============================================================
 ``{{ value }}``  The current (invalid) value
+``{{ label }}``  Corresponding form field label
 ===============  ==============================================================
+
+.. versionadded:: 5.2
+
+    The ``{{ label }}`` parameter was introduced in Symfony 5.2.
 
 ``message``
 ~~~~~~~~~~~
@@ -159,7 +190,12 @@ You can use the following parameters in this message:
 Parameter        Description
 ===============  ==============================================================
 ``{{ value }}``  The current (invalid) value
+``{{ label }}``  Corresponding form field label
 ===============  ==============================================================
+
+.. versionadded:: 5.2
+
+    The ``{{ label }}`` parameter was introduced in Symfony 5.2.
 
 .. include:: /reference/constraints/_payload-option.rst.inc
 

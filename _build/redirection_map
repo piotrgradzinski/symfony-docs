@@ -429,6 +429,7 @@
 /profiler/storage /profiler
 /setup/composer /setup
 /security/security_checker /setup
+/setup/built_in_web_server /setup/symfony_server
 /service_container/parameters /configuration
 /routing/generate_url_javascript /routing
 /routing/slash_in_parameter /routing
@@ -479,6 +480,7 @@
 /components/translation/usage /translation
 /components/translation/custom_formats https://github.com/symfony/translation
 /components/translation/custom_message_formatter https://github.com/symfony/translation
+/components/notifier https://github.com/symfony/notifier
 /components/routing https://github.com/symfony/routing
 /doctrine/pdo_session_storage /session/database
 /doctrine/mongodb_session_storage /session/database
@@ -510,4 +512,6 @@
 /messenger/message-recorder messenger/dispatch_after_current_bus
 /components/stopwatch https://github.com/symfony/stopwatch
 /service_container/3.3-di-changes https://symfony.com/doc/3.4/service_container/3.3-di-changes.html
+/frontend/encore/shared-entry /frontend/encore/split-chunks
 /testing/functional_tests_assertions /testing#testing-application-assertions
+/security/named_encoders /security/named_hashers

@@ -4,10 +4,6 @@ Handlers
 ElasticsearchLogstashHandler
 ----------------------------
 
-.. versionadded:: 4.4
-
-    The ``ElasticsearchLogstashHandler`` was introduced in Symfony 4.4.
-
 This handler deals directly with the HTTP interface of Elasticsearch. This means
 it will slow down your application if Elasticsearch takes times to answer. Even
 if all HTTP calls are done asynchronously.
@@ -92,14 +88,13 @@ Then reference it in the Monolog configuration:
 
         // config/packages/prod/monolog.php
         use Symfony\Bridge\Monolog\Handler\ElasticsearchLogstashHandler;
+        use Symfony\Config\MonologConfig;
 
-        $container->loadFromExtension('monolog', [
-            'handlers' => [
-                'es' => [
-                    'type' => 'service',
-                    'id' => ElasticsearchLogstashHandler::class,
-                ],
-            ],
-        ]);
+        return static function (MonologConfig $monolog) {
+            $monolog->handler('es')
+                ->type('service')
+                ->id(ElasticsearchLogstashHandler::class)
+            ;
+        };
 
 .. _`ELK stack`: https://www.elastic.co/what-is/elk-stack
